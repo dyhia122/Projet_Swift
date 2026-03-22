@@ -1,7 +1,9 @@
 import Foundation
 
-struct TaskItem: Codable, Sendable {
+struct Recipe: Codable, Sendable {
     let id: Int64?
     var title: String
-    var isCompleted: Bool
+    var ingredients: String
+    var steps: String
+    var category: String
 }
