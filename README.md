@@ -1,8 +1,15 @@
-# Swift App Template
+# Carnet de recette
+C'est une application web CRUD developpee en swift et sqLite
 
-A starter template for iOS development students to build and run a Swift-backed web app — entirely in **GitHub Codespaces**, no Xcode or macOS required.
-
-The included demo is a simple **Task List** app: a web server written in Swift that persists data with SQLite and renders an interactive UI in the browser.
+L'application permet a l'utilisateur de:
+-creer de nouvelles recettes
+-Modifier les recettes existantes
+-Consulter la liste des recettes existantes
+-Afficher une page de detail pour chaque recette
+-Rechercher des recettes
+-Supprimer une recette
+-Noter les recettes
+-Maquer la recette comme deja faite
 
 ---
 
