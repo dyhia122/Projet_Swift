@@ -65,10 +65,8 @@ router.get("/recipe/:id") { _, context -> HTML in
 router.post("/add") { request, _ -> Response in
     let form = try await parseForm(request)
 
-    if let error = validateRecipeForm(form) {
-        let allRecipes = try Database.fetchAllRecipes(db: db)
-        let html = Views.renderIndex(items: allRecipes, error: error)
-        return try html.response(from: request, context: BasicRequestContext(source: .init()))
+    if validateRecipeForm(form) != nil {
+        return Response(status: .seeOther, headers: [.location: "/"])
     }
 
     let recipe = Recipe(
@@ -98,10 +96,8 @@ router.post("/update/:id") { request, context -> Response in
 
     let form = try await parseForm(request)
 
-    if let error = validateRecipeForm(form),
-       let recipe = try Database.fetchRecipeById(db: db, recipeId: targetId) {
-        let html = Views.renderRecipeDetail(item: recipe, error: error)
-        return try html.response(from: request, context: BasicRequestContext(source: .init()))
+    if validateRecipeForm(form) != nil {
+        return Response(status: .seeOther, headers: [.location: "/recipe/\(targetId)"])
     }
 
     let updatedRecipe = Recipe(
@@ -167,5 +163,5 @@ let app = Application(
     configuration: .init(address: .hostname("0.0.0.0", port: 8080))
 )
 
-print("Server started at http://localhost:8080")
+print("🚀 Server started at http://localhost:8080")
 try await app.runService()
