@@ -13,12 +13,11 @@ L'application permet a l'utilisateur de:
 
 ---
 
-## 1. Using This Template
-
-1. Click the **"Use this template"** button at the top of this repository.
-2. Give your new repository a name and click **"Create repository"**.
-
-> Do **not** clone this repo directly — always start from your own copy created via the template.
+## Technologies utilisees:
+-Swif
+-SqLite
+-HTML
+-Pico CSS
 
 ---
 
