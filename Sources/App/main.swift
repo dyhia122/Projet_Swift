@@ -28,17 +28,17 @@ func parseForm(_ request: Request) async throws -> [String: String] {
 
 // Validation
 func validateRecipeForm(_ form: [String: String]) -> String? {
-    let title = form["title"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    let titre = form["titre"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let ingredients = form["ingredients"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    let steps = form["steps"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    let category = form["category"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    let prepTime = Int(form["prepTime"] ?? "") ?? 0
+    let etapes = form["etapes"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    let categorie = form["categorie"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    let tempsPreparation = Int(form["tempsPreparation"] ?? "") ?? 0
 
-    if title.isEmpty { return "Le titre est obligatoire." }
+    if titre.isEmpty { return "Le titre est obligatoire." }
     if ingredients.isEmpty { return "Les ingrédients sont obligatoires." }
-    if steps.isEmpty { return "Les étapes sont obligatoires." }
-    if category.isEmpty { return "La catégorie est obligatoire." }
-    if prepTime <= 0 { return "Le temps de préparation doit être supérieur à 0." }
+    if etapes.isEmpty { return "Les étapes sont obligatoires." }
+    if categorie.isEmpty { return "La catégorie est obligatoire." }
+    if tempsPreparation <= 0 { return "Le temps de préparation doit être supérieur à 0." }
 
     return nil
 }
@@ -46,20 +46,20 @@ func validateRecipeForm(_ form: [String: String]) -> String? {
 // READ - liste + recherche
 router.get("/") { request, _ -> HTML in
     let search = request.uri.queryParameters.get("search") ?? ""
-    let allRecipes = try Database.fetchAllRecipes(db: db, search: search)
-    return Views.renderIndex(items: allRecipes, search: search)
+    let toutesLesRecettes = try Database.fetchAllRecipes(db: db, search: search)
+    return Views.renderIndex(items: toutesLesRecettes, search: search)
 }
 
 // READ - détail
 router.get("/recipe/:id") { _, context -> HTML in
     guard let idStr = context.parameters.get("id"),
-          let targetId = Int64(idStr),
-          let recipe = try Database.fetchRecipeById(db: db, recipeId: targetId)
+        let targetId = Int64(idStr),
+        let recette = try Database.fetchRecipeById(db: db, recipeId: targetId)
     else {
         return Views.renderIndex(items: [], error: "Recette introuvable.")
     }
 
-    return Views.renderRecipeDetail(item: recipe)
+    return Views.renderRecipeDetail(item: recette)
 }
 
 // CREATE
@@ -70,19 +70,19 @@ router.post("/add") { request, _ -> Response in
         return Response(status: .seeOther, headers: [.location: "/"])
     }
 
-    let recipe = Recipe(
+    let recette = Recette(
         id: nil,
-        title: form["title"] ?? "",
+        titre: form["titre"] ?? "",
         ingredients: form["ingredients"] ?? "",
-        missingIngredients: form["missingIngredients"] ?? "",
-        steps: form["steps"] ?? "",
-        category: form["category"] ?? "",
-        rating: Int(form["rating"] ?? "3") ?? 3,
-        isCooked: form["isCooked"] != nil,
-        prepTime: Int(form["prepTime"] ?? "0") ?? 0
+        ingredientsManquants: form["ingredientsManquants"] ?? "",
+        etapes: form["etapes"] ?? "",
+        categorie: form["categorie"] ?? "",
+        note: Int(form["note"] ?? "3") ?? 3,
+        dejaFaite: form["dejaFaite"] != nil,
+        tempsPreparation: Int(form["tempsPreparation"] ?? "0") ?? 0
     )
 
-    try Database.addRecipe(db: db, recipe: recipe)
+    try Database.ajouterRecette(db: db, recette: recette)
 
     return Response(status: .seeOther, headers: [.location: "/"])
 }
@@ -90,7 +90,7 @@ router.post("/add") { request, _ -> Response in
 // UPDATE complet
 router.post("/update/:id") { request, context -> Response in
     guard let idStr = context.parameters.get("id"),
-          let targetId = Int64(idStr)
+        let targetId = Int64(idStr)
     else {
         return Response(status: .badRequest)
     }
@@ -101,19 +101,19 @@ router.post("/update/:id") { request, context -> Response in
         return Response(status: .seeOther, headers: [.location: "/recipe/\(targetId)"])
     }
 
-    let updatedRecipe = Recipe(
+    let recetteModifiee = Recette(
         id: targetId,
-        title: form["title"] ?? "",
+        titre: form["titre"] ?? "",
         ingredients: form["ingredients"] ?? "",
-        missingIngredients: form["missingIngredients"] ?? "",
-        steps: form["steps"] ?? "",
-        category: form["category"] ?? "",
-        rating: Int(form["rating"] ?? "3") ?? 3,
-        isCooked: form["isCooked"] != nil,
-        prepTime: Int(form["prepTime"] ?? "0") ?? 0
+        ingredientsManquants: form["ingredientsManquants"] ?? "",
+        etapes: form["etapes"] ?? "",
+        categorie: form["categorie"] ?? "",
+        note: Int(form["note"] ?? "3") ?? 3,
+        dejaFaite: form["dejaFaite"] != nil,
+        tempsPreparation: Int(form["tempsPreparation"] ?? "0") ?? 0
     )
 
-    try Database.updateRecipe(db: db, recipe: updatedRecipe)
+    try Database.updateRecipe(db: db, recipe: recetteModifiee)
 
     return Response(status: .seeOther, headers: [.location: "/recipe/\(targetId)"])
 }
@@ -121,7 +121,7 @@ router.post("/update/:id") { request, context -> Response in
 // DELETE
 router.post("/delete/:id") { _, context -> Response in
     guard let idStr = context.parameters.get("id"),
-          let targetId = Int64(idStr)
+        let targetId = Int64(idStr)
     else {
         return Response(status: .badRequest)
     }
@@ -130,10 +130,10 @@ router.post("/delete/:id") { _, context -> Response in
     return Response(status: .seeOther, headers: [.location: "/"])
 }
 
-// TOGGLE cooked
+// TOGGLE statut
 router.post("/toggle-cooked/:id") { _, context -> Response in
     guard let idStr = context.parameters.get("id"),
-          let targetId = Int64(idStr)
+        let targetId = Int64(idStr)
     else {
         return Response(status: .badRequest)
     }
@@ -142,18 +142,18 @@ router.post("/toggle-cooked/:id") { _, context -> Response in
     return Response(status: .seeOther, headers: [.location: "/"])
 }
 
-// RATE
+// NOTE
 router.post("/rate/:id") { request, context -> Response in
     guard let idStr = context.parameters.get("id"),
-          let targetId = Int64(idStr)
+        let targetId = Int64(idStr)
     else {
         return Response(status: .badRequest)
     }
 
     let form = try await parseForm(request)
-    let rating = max(1, min(5, Int(form["rating"] ?? "3") ?? 3))
+    let note = max(1, min(5, Int(form["note"] ?? "3") ?? 3))
 
-    try Database.updateRating(db: db, id: targetId, newRating: rating)
+    try Database.updateRating(db: db, id: targetId, newRating: note)
 
     return Response(status: .seeOther, headers: [.location: "/"])
 }

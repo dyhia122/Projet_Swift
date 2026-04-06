@@ -1,13 +1,13 @@
 import Foundation
 
-struct Recipe: Codable, Sendable {
+struct Recette: Codable, Sendable {
     let id: Int64?
-    var title: String
+    var titre: String
     var ingredients: String
-    var missingIngredients: String
-    var steps: String
-    var category: String
-    var rating: Int
-    var isCooked: Bool
-    var prepTime: Int
+    var ingredientsManquants: String
+    var etapes: String
+    var categorie: String
+    var note: Int
+    var dejaFaite: Bool
+    var tempsPreparation: Int
 }
