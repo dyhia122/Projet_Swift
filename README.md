@@ -21,13 +21,14 @@ L'application permet a l'utilisateur de:
 
 ---
 
-## 2. Opening in GitHub Codespaces
+## Fonctionnalites
 
-1. In **your new repository**, click the green **"Code"** button.
-2. Select the **"Codespaces"** tab and click **"Create codespace on main"**.
-3. Wait for the container to build — this pulls the Swift 6.2 Docker image and runs `swift package resolve` automatically. This takes a few minutes the first time.
+1. Create -> Ajouter une nouvelle recette
+2. Read -> Affichage de toutes les recettes
+3. Update -> Modification d'une recette deja existante
+4. Delete -> Suppression d'une recette
 
-Once the container is ready, VS Code opens in the browser with Swift fully configured.
+
 
 ---
 
