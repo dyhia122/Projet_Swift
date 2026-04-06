@@ -3,6 +3,26 @@ import Hummingbird
 
 struct Views {
 
+    static let categories = [
+        "Petit-déjeuner",
+        "Déjeuner",
+        "Dîner",
+        "Dessert",
+        "Salade",
+        "Italienne",
+        "Asiatique",
+        "Végétarienne",
+        "Snack",
+        "Boisson"
+    ]
+
+    static func renderCategoryOptions(selected: String? = nil) -> String {
+        categories.map { category in
+            let isSelected = selected == category ? "selected" : ""
+            return "<option value='\(category)' \(isSelected)>\(category)</option>"
+        }.joined()
+    }
+
     static func etoiles(_ note: Int) -> String {
         let noteSecurisee = max(1, min(5, note))
         return String(repeating: "⭐", count: noteSecurisee)
@@ -523,7 +543,10 @@ struct Views {
 
                                     <div>
                                         <label>Catégorie</label>
-                                        <input name="categorie" placeholder="Ex: Dessert" required>
+                                        <select name="categorie" required>
+                                            <option value="">Choisir une catégorie</option>
+                                            \(renderCategoryOptions())
+                                        </select>
                                     </div>
 
                                     <div>
@@ -710,7 +733,9 @@ struct Views {
 
                                 <div>
                                     <label>Catégorie</label>
-                                    <input name="categorie" value="\(item.categorie)" required>
+                                    <select name="categorie" required>
+                                        \(renderCategoryOptions(selected: item.categorie))
+                                    </select>
                                 </div>
 
                                 <div>

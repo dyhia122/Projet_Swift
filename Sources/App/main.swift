@@ -38,6 +38,9 @@ func validateRecipeForm(_ form: [String: String]) -> String? {
     if ingredients.isEmpty { return "Les ingrédients sont obligatoires." }
     if etapes.isEmpty { return "Les étapes sont obligatoires." }
     if categorie.isEmpty { return "La catégorie est obligatoire." }
+    if !Views.categories.contains(categorie) {
+        return "La catégorie choisie est invalide."
+    }
     if tempsPreparation <= 0 { return "Le temps de préparation doit être supérieur à 0." }
 
     return nil
