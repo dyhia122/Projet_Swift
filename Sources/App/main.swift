@@ -53,7 +53,7 @@ router.get("/") { request, _ -> HTML in
     return Views.renderIndex(items: toutesLesRecettes, search: search)
 }
 
-// READ - détail
+// READ - voir détail
 router.get("/recipe/:id") { _, context -> HTML in
     guard let idStr = context.parameters.get("id"),
         let targetId = Int64(idStr),
@@ -65,6 +65,18 @@ router.get("/recipe/:id") { _, context -> HTML in
     return Views.renderRecipeDetail(item: recette)
 }
 
+// READ - page modifier
+router.get("/recipe/:id/edit") { _, context -> HTML in
+    guard let idStr = context.parameters.get("id"),
+        let targetId = Int64(idStr),
+        let recette = try Database.fetchRecipeById(db: db, recipeId: targetId)
+    else {
+        return Views.renderIndex(items: [], error: "Recette introuvable.")
+    }
+
+    return Views.renderRecipeEdit(item: recette)
+}
+
 // CREATE
 router.post("/add") { request, _ -> Response in
     let form = try await parseForm(request)
@@ -73,6 +85,9 @@ router.post("/add") { request, _ -> Response in
         return Response(status: .seeOther, headers: [.location: "/"])
     }
 
+    let dejaFaite = form["dejaFaite"] != nil
+    let note: Int? = dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil
+
     let recette = Recette(
         id: nil,
         titre: form["titre"] ?? "",
@@ -80,8 +95,8 @@ router.post("/add") { request, _ -> Response in
         ingredientsManquants: form["ingredientsManquants"] ?? "",
         etapes: form["etapes"] ?? "",
         categorie: form["categorie"] ?? "",
-        note: Int(form["note"] ?? "3") ?? 3,
-        dejaFaite: form["dejaFaite"] != nil,
+        note: note,
+        dejaFaite: dejaFaite,
         tempsPreparation: Int(form["tempsPreparation"] ?? "0") ?? 0
     )
 
@@ -101,8 +116,11 @@ router.post("/update/:id") { request, context -> Response in
     let form = try await parseForm(request)
 
     if validateRecipeForm(form) != nil {
-        return Response(status: .seeOther, headers: [.location: "/recipe/\(targetId)"])
+        return Response(status: .seeOther, headers: [.location: "/recipe/\(targetId)/edit"])
     }
+
+    let dejaFaite = form["dejaFaite"] != nil
+    let note: Int? = dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil
 
     let recetteModifiee = Recette(
         id: targetId,
@@ -111,8 +129,8 @@ router.post("/update/:id") { request, context -> Response in
         ingredientsManquants: form["ingredientsManquants"] ?? "",
         etapes: form["etapes"] ?? "",
         categorie: form["categorie"] ?? "",
-        note: Int(form["note"] ?? "3") ?? 3,
-        dejaFaite: form["dejaFaite"] != nil,
+        note: note,
+        dejaFaite: dejaFaite,
         tempsPreparation: Int(form["tempsPreparation"] ?? "0") ?? 0
     )
 

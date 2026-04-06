@@ -7,7 +7,7 @@ struct Recette: Codable, Sendable {
     var ingredientsManquants: String
     var etapes: String
     var categorie: String
-    var note: Int
+    var note: Int?
     var dejaFaite: Bool
     var tempsPreparation: Int
 }

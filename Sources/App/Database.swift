@@ -13,7 +13,7 @@ struct Database {
     static let ingredientsManquants = Expression<String>("ingredients_manquants")
     static let etapes = Expression<String>("etapes")
     static let categorie = Expression<String>("categorie")
-    static let note = Expression<Int>("note")
+    static let note = Expression<Int?>("note")
     static let dejaFaite = Expression<Bool>("deja_faite")
     static let tempsPreparation = Expression<Int>("temps_preparation")
 
@@ -62,7 +62,7 @@ struct Database {
                     etapes:
                         "1. Mélanger tous les ingrédients.\n2. Laisser reposer 10 minutes.\n3. Cuire à la poêle.",
                     categorie: "Petit-déjeuner",
-                    note: 5,
+                    note: nil,
                     dejaFaite: false,
                     tempsPreparation: 15
                 ),
@@ -86,7 +86,7 @@ struct Database {
                     etapes:
                         "1. Faire fondre le chocolat et le beurre.\n2. Ajouter sucre, œufs et farine.\n3. Cuire au four.",
                     categorie: "Dessert",
-                    note: 5,
+                    note: nil,
                     dejaFaite: false,
                     tempsPreparation: 35
                 ),
@@ -187,11 +187,24 @@ struct Database {
         guard let row = try db.pluck(recette) else { return }
         let current = row[dejaFaite]
 
-        try db.run(recette.update(dejaFaite <- !current))
+        // Si on remet "pas faite", on enlève la note
+        if current == true {
+            try db.run(
+                recette.update(
+                    dejaFaite <- false,
+                    note <- nil
+                ))
+        } else {
+            try db.run(recette.update(dejaFaite <- true))
+        }
     }
 
     static func updateRating(db: Connection, id targetId: Int64, newRating: Int) throws {
         let recette = recettes.filter(id == targetId)
+
+        guard let row = try db.pluck(recette) else { return }
+        guard row[dejaFaite] == true else { return }
+
         try db.run(recette.update(note <- newRating))
     }
 }

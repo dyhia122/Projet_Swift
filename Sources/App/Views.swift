@@ -23,7 +23,8 @@ struct Views {
         }.joined()
     }
 
-    static func etoiles(_ note: Int) -> String {
+    static func etoiles(_ note: Int?) -> String {
+        guard let note else { return "—" }
         let noteSecurisee = max(1, min(5, note))
         return String(repeating: "⭐", count: noteSecurisee)
     }
@@ -37,7 +38,40 @@ struct Views {
     static func renderIndex(items: [Recette], search: String = "", error: String? = nil) -> HTML {
 
         let rows = items.map { item in
-            """
+            let ratingBlock = item.dejaFaite && item.note != nil
+                ? """
+                <div class="recipe-rating">
+                    <div class="stars">\(etoiles(item.note))</div>
+                    <small>\(item.note ?? 0)/5</small>
+                </div>
+                """
+                : """
+                <div class="recipe-rating">
+                    <div class="stars">📝</div>
+                    <small>Pas encore notée</small>
+                </div>
+                """
+
+            let noteForm = item.dejaFaite
+                ? """
+                <form action="/rate/\(item.id ?? 0)" method="post" class="inline-form">
+                    <select name="note">
+                        <option value="1">1 ⭐</option>
+                        <option value="2">2 ⭐</option>
+                        <option value="3">3 ⭐</option>
+                        <option value="4">4 ⭐</option>
+                        <option value="5">5 ⭐</option>
+                    </select>
+                    <button type="submit">Noter</button>
+                </form>
+                """
+                : """
+                <div class="recipe-section-box missing-box">
+                    <p><strong>ℹ️ Astuce :</strong> tu pourras noter cette recette une fois qu’elle sera marquée comme “Déjà faite”.</p>
+                </div>
+                """
+
+            return """
             <article class="recipe-card">
                 <div class="recipe-header">
                     <div>
@@ -49,10 +83,7 @@ struct Views {
                         </div>
                     </div>
 
-                    <div class="recipe-rating">
-                        <div class="stars">\(etoiles(item.note))</div>
-                        <small>\(item.note)/5</small>
-                    </div>
+                    \(ratingBlock)
                 </div>
 
                 <div class="info-grid">
@@ -90,23 +121,17 @@ struct Views {
                         <button type="submit" class="outline">Basculer le statut</button>
                     </form>
 
-                    <form action="/rate/\(item.id ?? 0)" method="post" class="inline-form">
-                        <select name="note">
-                            <option value="1">1 ⭐</option>
-                            <option value="2">2 ⭐</option>
-                            <option value="3">3 ⭐</option>
-                            <option value="4">4 ⭐</option>
-                            <option value="5">5 ⭐</option>
-                        </select>
-                        <button type="submit">Noter</button>
-                    </form>
+                    \(noteForm)
 
                     <form action="/delete/\(item.id ?? 0)" method="post">
                         <button type="submit" class="contrast">Supprimer</button>
                     </form>
                 </div>
 
-                <a href="/recipe/\(item.id ?? 0)" class="detail-link">✏️ Voir / Modifier la recette</a>
+                <div class="action-grid">
+                    <a href="/recipe/\(item.id ?? 0)" class="detail-link">👁 Voir la recette</a>
+                    <a href="/recipe/\(item.id ?? 0)/edit" class="detail-link">✏️ Modifier la recette</a>
+                </div>
             </article>
             """
         }.joined()
@@ -137,9 +162,7 @@ struct Views {
                         --category-text: #6b46c1;
                     }
 
-                    html {
-                        scroll-behavior: smooth;
-                    }
+                    html { scroll-behavior: smooth; }
 
                     body {
                         min-height: 100vh;
@@ -195,9 +218,7 @@ struct Views {
                         padding: 1.5rem;
                     }
 
-                    .section-spacing {
-                        margin-top: 2rem;
-                    }
+                    .section-spacing { margin-top: 2rem; }
 
                     .error-box {
                         background: #fff1f1;
@@ -209,9 +230,7 @@ struct Views {
                         font-weight: 600;
                     }
 
-                    details.recipe-form {
-                        overflow: hidden;
-                    }
+                    details.recipe-form { overflow: hidden; }
 
                     details.recipe-form summary {
                         cursor: pointer;
@@ -223,19 +242,9 @@ struct Views {
                         align-items: center;
                     }
 
-                    details.recipe-form summary::-webkit-details-marker {
-                        display: none;
-                    }
-
-                    details.recipe-form summary::after {
-                        content: "＋";
-                        font-size: 1.4rem;
-                        transition: transform 0.2s ease;
-                    }
-
-                    details.recipe-form[open] summary::after {
-                        content: "−";
-                    }
+                    details.recipe-form summary::-webkit-details-marker { display: none; }
+                    details.recipe-form summary::after { content: "＋"; font-size: 1.4rem; }
+                    details.recipe-form[open] summary::after { content: "−"; }
 
                     .form-grid {
                         display: grid;
@@ -244,14 +253,8 @@ struct Views {
                         margin-top: 1.25rem;
                     }
 
-                    .form-full {
-                        grid-column: 1 / -1;
-                    }
-
-                    textarea {
-                        min-height: 130px;
-                        resize: vertical;
-                    }
+                    .form-full { grid-column: 1 / -1; }
+                    textarea { min-height: 130px; resize: vertical; }
 
                     .search-row {
                         display: flex;
@@ -260,14 +263,8 @@ struct Views {
                         flex-wrap: wrap;
                     }
 
-                    .search-row form {
-                        flex: 1;
-                        margin: 0;
-                    }
-
-                    .search-row input {
-                        margin-bottom: 0;
-                    }
+                    .search-row form { flex: 1; margin: 0; }
+                    .search-row input { margin-bottom: 0; }
 
                     .section-title {
                         display: flex;
@@ -278,9 +275,7 @@ struct Views {
                         flex-wrap: wrap;
                     }
 
-                    .section-title h2 {
-                        margin: 0;
-                    }
+                    .section-title h2 { margin: 0; }
 
                     .count-badge {
                         background: rgba(255,255,255,0.85);
@@ -302,12 +297,6 @@ struct Views {
                         border-radius: 26px;
                         padding: 1.35rem;
                         box-shadow: 0 18px 40px rgba(0,0,0,0.07);
-                        transition: transform 0.18s ease, box-shadow 0.18s ease;
-                    }
-
-                    .recipe-card:hover {
-                        transform: translateY(-4px);
-                        box-shadow: 0 24px 50px rgba(0,0,0,0.10);
                     }
 
                     .recipe-header {
@@ -326,10 +315,7 @@ struct Views {
                         font-weight: 700;
                     }
 
-                    .recipe-header h2 {
-                        margin: 0;
-                        font-size: 1.5rem;
-                    }
+                    .recipe-header h2 { margin: 0; font-size: 1.5rem; }
 
                     .recipe-badges {
                         display: flex;
@@ -348,34 +334,20 @@ struct Views {
                         font-weight: 700;
                     }
 
-                    .badge-category {
-                        background: var(--category-bg);
-                        color: var(--category-text);
-                    }
-
-                    .badge-success {
-                        background: var(--success-bg);
-                        color: var(--success-text);
-                    }
-
-                    .badge-warning {
-                        background: var(--warning-bg);
-                        color: var(--warning-text);
-                    }
+                    .badge-category { background: var(--category-bg); color: var(--category-text); }
+                    .badge-success { background: var(--success-bg); color: var(--success-text); }
+                    .badge-warning { background: var(--warning-bg); color: var(--warning-text); }
 
                     .recipe-rating {
                         text-align: right;
-                        min-width: 90px;
+                        min-width: 110px;
                         background: rgba(255, 248, 220, 0.7);
                         border: 1px solid rgba(230, 200, 100, 0.25);
                         padding: 0.8rem;
                         border-radius: 18px;
                     }
 
-                    .stars {
-                        font-size: 1.15rem;
-                        margin-bottom: 0.2rem;
-                    }
+                    .stars { font-size: 1.15rem; margin-bottom: 0.2rem; }
 
                     .info-grid {
                         display: grid;
@@ -398,10 +370,6 @@ struct Views {
                         margin-bottom: 0.25rem;
                     }
 
-                    .info-box strong {
-                        font-size: 1rem;
-                    }
-
                     .recipe-section-box {
                         background: rgba(249, 250, 251, 0.85);
                         border: 1px solid rgba(0,0,0,0.05);
@@ -416,9 +384,7 @@ struct Views {
                         font-size: 1rem;
                     }
 
-                    .missing-box {
-                        border-left: 5px solid #f59e0b;
-                    }
+                    .missing-box { border-left: 5px solid #f59e0b; }
 
                     .action-grid {
                         display: grid;
@@ -427,9 +393,7 @@ struct Views {
                         margin-top: 1.2rem;
                     }
 
-                    .action-grid form {
-                        margin: 0;
-                    }
+                    .action-grid form { margin: 0; }
 
                     .inline-form {
                         display: grid;
@@ -439,7 +403,6 @@ struct Views {
 
                     .detail-link {
                         display: inline-block;
-                        margin-top: 1rem;
                         font-weight: 700;
                         text-decoration: none;
                     }
@@ -472,14 +435,6 @@ struct Views {
                         box-shadow: 0 24px 55px rgba(0,0,0,0.08);
                     }
 
-                    .detail-header {
-                        margin-bottom: 1.5rem;
-                    }
-
-                    .detail-header h1 {
-                        margin-bottom: 0.5rem;
-                    }
-
                     .footer-note {
                         text-align: center;
                         margin-top: 3rem;
@@ -488,26 +443,11 @@ struct Views {
                     }
 
                     @media (max-width: 768px) {
-                        .recipe-header {
-                            flex-direction: column;
-                        }
-
-                        .recipe-rating {
-                            width: 100%;
-                            text-align: left;
-                        }
-
-                        .info-grid {
-                            grid-template-columns: 1fr;
-                        }
-
-                        .inline-form {
-                            grid-template-columns: 1fr;
-                        }
-
-                        .detail-card {
-                            padding: 1.2rem;
-                        }
+                        .recipe-header { flex-direction: column; }
+                        .recipe-rating { width: 100%; text-align: left; }
+                        .info-grid { grid-template-columns: 1fr; }
+                        .inline-form { grid-template-columns: 1fr; }
+                        .detail-card { padding: 1.2rem; }
                     }
                 </style>
             </head>
@@ -563,6 +503,7 @@ struct Views {
                                             <option value="4">4 ⭐</option>
                                             <option value="5">5 ⭐</option>
                                         </select>
+                                        <small>Cette note sera ignorée si la recette n’est pas encore faite.</small>
                                     </div>
 
                                     <div class="form-full">
@@ -613,7 +554,21 @@ struct Views {
     }
 
     static func renderRecipeDetail(item: Recette, error: String? = nil) -> HTML {
-        HTML(
+        let noteSection = item.dejaFaite && item.note != nil
+            ? """
+            <div class="recipe-section-box">
+                <h3>⭐ Note</h3>
+                <p>\(etoiles(item.note)) — \(item.note ?? 0)/5</p>
+            </div>
+            """
+            : """
+            <div class="recipe-section-box missing-box">
+                <h3>⭐ Note</h3>
+                <p>Cette recette n’a pas encore été notée.</p>
+            </div>
+            """
+
+        return HTML(
             content: """
             <!DOCTYPE html>
             <html lang="fr">
@@ -622,16 +577,129 @@ struct Views {
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
                 <title>\(item.titre)</title>
-
                 <style>
-                    :root {
-                        --primary: #e67e22;
-                        --primary-hover: #cf711d;
-                        --primary-focus: rgba(230, 126, 34, 0.2);
-                        --border-soft: rgba(0,0,0,0.08);
-                        --text-soft: #6b7280;
+                    body {
+                        min-height: 100vh;
+                        background:
+                            radial-gradient(circle at top left, rgba(255, 216, 176, 0.5), transparent 25%),
+                            radial-gradient(circle at top right, rgba(255, 231, 204, 0.7), transparent 30%),
+                            linear-gradient(180deg, #fffaf5 0%, #fff7f0 100%);
+                        color: #1f2937;
                     }
 
+                    .container {
+                        max-width: 900px;
+                        padding-top: 2rem;
+                        padding-bottom: 4rem;
+                    }
+
+                    .back-link {
+                        display: inline-block;
+                        margin-bottom: 1rem;
+                        font-weight: 700;
+                        text-decoration: none;
+                    }
+
+                    .detail-card {
+                        background: rgba(255,255,255,0.92);
+                        border-radius: 28px;
+                        padding: 2rem;
+                        box-shadow: 0 24px 55px rgba(0,0,0,0.08);
+                    }
+
+                    .badge {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 0.35rem;
+                        border-radius: 999px;
+                        padding: 0.45rem 0.8rem;
+                        font-size: 0.8rem;
+                        font-weight: 700;
+                        background: #f4f1ff;
+                        color: #6b46c1;
+                        margin-right: 0.5rem;
+                    }
+
+                    .recipe-section-box {
+                        background: rgba(249, 250, 251, 0.85);
+                        border: 1px solid rgba(0,0,0,0.05);
+                        border-radius: 18px;
+                        padding: 1rem;
+                        margin-top: 1rem;
+                    }
+
+                    .missing-box {
+                        border-left: 5px solid #f59e0b;
+                    }
+
+                    .action-row {
+                        display: flex;
+                        gap: 1rem;
+                        flex-wrap: wrap;
+                        margin-top: 1.5rem;
+                    }
+                </style>
+            </head>
+            <body class="container">
+                <main class="detail-page">
+                    <a href="/" class="back-link">← Retour à l’accueil</a>
+
+                    <section class="detail-card">
+                        <h1>🍽 \(item.titre)</h1>
+
+                        <div style="margin-bottom: 1rem;">
+                            <span class="badge">📂 \(item.categorie)</span>
+                            \(badgeStatut(item.dejaFaite))
+                        </div>
+
+                        <div class="recipe-section-box">
+                            <h3>⏱ Temps de préparation</h3>
+                            <p>\(item.tempsPreparation) minutes</p>
+                        </div>
+
+                        \(noteSection)
+
+                        <div class="recipe-section-box">
+                            <h3>🧂 Ingrédients</h3>
+                            <p>\(item.ingredients)</p>
+                        </div>
+
+                        <div class="recipe-section-box missing-box">
+                            <h3>🛒 Ingrédients manquants</h3>
+                            <p>\(item.ingredientsManquants.isEmpty ? "Aucun ingrédient manquant 🎉" : item.ingredientsManquants)</p>
+                        </div>
+
+                        <div class="recipe-section-box">
+                            <h3>👨‍🍳 Étapes</h3>
+                            <p>\(item.etapes.replacingOccurrences(of: "\n", with: "<br>"))</p>
+                        </div>
+
+                        <div class="action-row">
+                            <a href="/recipe/\(item.id ?? 0)/edit" role="button">✏️ Modifier</a>
+                            <form action="/delete/\(item.id ?? 0)" method="post">
+                                <button type="submit" class="contrast">Supprimer</button>
+                            </form>
+                        </div>
+                    </section>
+                </main>
+            </body>
+            </html>
+            """
+        )
+    }
+
+    static func renderRecipeEdit(item: Recette, error: String? = nil) -> HTML {
+        HTML(
+            content: """
+            <!DOCTYPE html>
+            <html lang="fr">
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+                <title>Modifier \(item.titre)</title>
+
+                <style>
                     body {
                         min-height: 100vh;
                         background:
@@ -656,22 +724,9 @@ struct Views {
 
                     .detail-card {
                         background: rgba(255,255,255,0.92);
-                        border: 1px solid var(--border-soft);
                         border-radius: 28px;
                         padding: 2rem;
                         box-shadow: 0 24px 55px rgba(0,0,0,0.08);
-                    }
-
-                    .detail-header {
-                        margin-bottom: 1.5rem;
-                    }
-
-                    .detail-header h1 {
-                        margin-bottom: 0.4rem;
-                    }
-
-                    .detail-header p {
-                        color: var(--text-soft);
                     }
 
                     .error-box {
@@ -704,17 +759,11 @@ struct Views {
                         padding-top: 1.5rem;
                         border-top: 1px solid rgba(0,0,0,0.08);
                     }
-
-                    @media (max-width: 768px) {
-                        .detail-card {
-                            padding: 1.2rem;
-                        }
-                    }
                 </style>
             </head>
             <body class="container">
                 <main class="detail-page">
-                    <a href="/" class="back-link">← Retour à l’accueil</a>
+                    <a href="/recipe/\(item.id ?? 0)" class="back-link">← Retour à la recette</a>
 
                     <section class="detail-card">
                         <div class="detail-header">
@@ -746,12 +795,13 @@ struct Views {
                                 <div>
                                     <label>Note</label>
                                     <select name="note">
-                                        <option value="1" \(item.note == 1 ? "selected" : "")>1 ⭐</option>
-                                        <option value="2" \(item.note == 2 ? "selected" : "")>2 ⭐</option>
-                                        <option value="3" \(item.note == 3 ? "selected" : "")>3 ⭐</option>
-                                        <option value="4" \(item.note == 4 ? "selected" : "")>4 ⭐</option>
-                                        <option value="5" \(item.note == 5 ? "selected" : "")>5 ⭐</option>
+                                        <option value="1" \((item.note ?? 3) == 1 ? "selected" : "")>1 ⭐</option>
+                                        <option value="2" \((item.note ?? 3) == 2 ? "selected" : "")>2 ⭐</option>
+                                        <option value="3" \((item.note ?? 3) == 3 ? "selected" : "")>3 ⭐</option>
+                                        <option value="4" \((item.note ?? 3) == 4 ? "selected" : "")>4 ⭐</option>
+                                        <option value="5" \((item.note ?? 3) == 5 ? "selected" : "")>5 ⭐</option>
                                     </select>
+                                    <small>La note ne sera enregistrée que si la recette est marquée comme déjà faite.</small>
                                 </div>
 
                                 <div class="form-full">
