@@ -17,6 +17,19 @@ struct Database {
     static let dejaFaite = Expression<Bool>("deja_faite")
     static let tempsPreparation = Expression<Int>("temps_preparation")
 
+    static let categoriesDisponibles = [
+        "Petit-déjeuner",
+        "Déjeuner",
+        "Dîner",
+        "Dessert",
+        "Salade",
+        "Italienne",
+        "Asiatique",
+        "Rapide",
+        "Healthy",
+        "Snack",
+    ]
+
     static func setup() throws -> Connection {
         let db = try Connection("db.sqlite3")
 
@@ -151,7 +164,7 @@ struct Database {
                 ingredientsManquants <- recette.ingredientsManquants,
                 etapes <- recette.etapes,
                 categorie <- recette.categorie,
-                note <- recette.note,
+                note <- recette.dejaFaite ? recette.note : nil,
                 dejaFaite <- recette.dejaFaite,
                 tempsPreparation <- recette.tempsPreparation
             )
@@ -169,7 +182,7 @@ struct Database {
                 ingredientsManquants <- recipe.ingredientsManquants,
                 etapes <- recipe.etapes,
                 categorie <- recipe.categorie,
-                note <- recipe.note,
+                note <- (recipe.dejaFaite ? recipe.note : nil),
                 dejaFaite <- recipe.dejaFaite,
                 tempsPreparation <- recipe.tempsPreparation
             )
@@ -187,21 +200,21 @@ struct Database {
         guard let row = try db.pluck(recette) else { return }
         let current = row[dejaFaite]
 
-        try db.run(
-            recette.update(
-                dejaFaite <- !current,
-                note <- (!current ? 3 : nil)
-            ))
+        if current == true {
+            try db.run(recette.update(dejaFaite <- false, note <- nil))
+        } else {
+            try db.run(recette.update(dejaFaite <- true))
+        }
     }
 
     static func updateRating(db: Connection, id targetId: Int64, newRating: Int) throws {
         let recette = recettes.filter(id == targetId)
 
         guard let row = try db.pluck(recette) else { return }
+        let isCooked = row[dejaFaite]
 
-        // On ne note que si déjà faite
-        guard row[dejaFaite] else { return }
-
-        try db.run(recette.update(note <- newRating))
+        if isCooked {
+            try db.run(recette.update(note <- newRating))
+        }
     }
 }

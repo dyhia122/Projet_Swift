@@ -38,40 +38,62 @@ func validateRecipeForm(_ form: [String: String]) -> String? {
     if ingredients.isEmpty { return "Les ingrédients sont obligatoires." }
     if etapes.isEmpty { return "Les étapes sont obligatoires." }
     if categorie.isEmpty { return "La catégorie est obligatoire." }
+    if !Database.categoriesDisponibles.contains(categorie) {
+        return "La catégorie sélectionnée est invalide."
+    }
     if tempsPreparation <= 0 { return "Le temps de préparation doit être supérieur à 0." }
 
     return nil
 }
 
-// READ - liste + recherche
+// HOME - liste + recherche
 router.get("/") { request, _ -> HTML in
     let search = request.uri.queryParameters.get("search") ?? ""
     let toutesLesRecettes = try Database.fetchAllRecipes(db: db, search: search)
-    return Views.renderIndex(items: toutesLesRecettes, search: search)
+    return Views.renderIndex(
+        items: toutesLesRecettes,
+        search: search
+    )
 }
 
-// READ - page voir recette
+// PAGE AJOUT
+router.get("/add") { _, _ -> HTML in
+    return Views.renderAddRecipePage(
+        categories: Database.categoriesDisponibles
+    )
+}
+
+// READ - voir détail
 router.get("/recipe/:id") { _, context -> HTML in
     guard let idStr = context.parameters.get("id"),
         let targetId = Int64(idStr),
         let recette = try Database.fetchRecipeById(db: db, recipeId: targetId)
     else {
-        return Views.renderIndex(items: [], error: "Recette introuvable.")
+        return Views.renderMessagePage(
+            title: "Recette introuvable",
+            message: "La recette demandée n’existe pas ou a été supprimée."
+        )
     }
 
-    return Views.renderRecipeView(item: recette)
+    return Views.renderRecipeDetail(item: recette)
 }
 
-// READ - page modifier recette
-router.get("/recipe/:id/edit") { _, context -> HTML in
+// PAGE MODIFIER
+router.get("/edit/:id") { _, context -> HTML in
     guard let idStr = context.parameters.get("id"),
         let targetId = Int64(idStr),
         let recette = try Database.fetchRecipeById(db: db, recipeId: targetId)
     else {
-        return Views.renderIndex(items: [], error: "Recette introuvable.")
+        return Views.renderMessagePage(
+            title: "Recette introuvable",
+            message: "Impossible de modifier cette recette."
+        )
     }
 
-    return Views.renderRecipeEdit(item: recette)
+    return Views.renderEditRecipePage(
+        item: recette,
+        categories: Database.categoriesDisponibles
+    )
 }
 
 // CREATE
@@ -79,11 +101,10 @@ router.post("/add") { request, _ -> Response in
     let form = try await parseForm(request)
 
     if validateRecipeForm(form) != nil {
-        return Response(status: .seeOther, headers: [.location: "/"])
+        return Response(status: .seeOther, headers: [.location: "/add"])
     }
 
     let dejaFaite = form["dejaFaite"] != nil
-    let noteValue = dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil
 
     let recette = Recette(
         id: nil,
@@ -92,7 +113,7 @@ router.post("/add") { request, _ -> Response in
         ingredientsManquants: form["ingredientsManquants"] ?? "",
         etapes: form["etapes"] ?? "",
         categorie: form["categorie"] ?? "",
-        note: noteValue,
+        note: dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil,
         dejaFaite: dejaFaite,
         tempsPreparation: Int(form["tempsPreparation"] ?? "0") ?? 0
     )
@@ -113,11 +134,10 @@ router.post("/update/:id") { request, context -> Response in
     let form = try await parseForm(request)
 
     if validateRecipeForm(form) != nil {
-        return Response(status: .seeOther, headers: [.location: "/recipe/\(targetId)/edit"])
+        return Response(status: .seeOther, headers: [.location: "/edit/\(targetId)"])
     }
 
     let dejaFaite = form["dejaFaite"] != nil
-    let noteValue = dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil
 
     let recetteModifiee = Recette(
         id: targetId,
@@ -126,7 +146,7 @@ router.post("/update/:id") { request, context -> Response in
         ingredientsManquants: form["ingredientsManquants"] ?? "",
         etapes: form["etapes"] ?? "",
         categorie: form["categorie"] ?? "",
-        note: noteValue,
+        note: dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil,
         dejaFaite: dejaFaite,
         tempsPreparation: Int(form["tempsPreparation"] ?? "0") ?? 0
     )
