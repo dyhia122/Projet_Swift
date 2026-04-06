@@ -38,41 +38,30 @@ func validateRecipeForm(_ form: [String: String]) -> String? {
     if ingredients.isEmpty { return "Les ingrédients sont obligatoires." }
     if etapes.isEmpty { return "Les étapes sont obligatoires." }
     if categorie.isEmpty { return "La catégorie est obligatoire." }
-    if !Database.categoriesDisponibles.contains(categorie) {
-        return "La catégorie sélectionnée est invalide."
-    }
     if tempsPreparation <= 0 { return "Le temps de préparation doit être supérieur à 0." }
 
     return nil
 }
 
-// HOME - liste + recherche
+// READ - liste + recherche
 router.get("/") { request, _ -> HTML in
     let search = request.uri.queryParameters.get("search") ?? ""
     let toutesLesRecettes = try Database.fetchAllRecipes(db: db, search: search)
-    return Views.renderIndex(
-        items: toutesLesRecettes,
-        search: search
-    )
+    return Views.renderIndex(items: toutesLesRecettes, search: search)
 }
 
 // PAGE AJOUT
 router.get("/add") { _, _ -> HTML in
-    return Views.renderAddRecipePage(
-        categories: Database.categoriesDisponibles
-    )
+    return Views.renderAddRecipePage()
 }
 
-// READ - voir détail
+// READ - détail (VOIR)
 router.get("/recipe/:id") { _, context -> HTML in
     guard let idStr = context.parameters.get("id"),
         let targetId = Int64(idStr),
         let recette = try Database.fetchRecipeById(db: db, recipeId: targetId)
     else {
-        return Views.renderMessagePage(
-            title: "Recette introuvable",
-            message: "La recette demandée n’existe pas ou a été supprimée."
-        )
+        return Views.renderIndex(items: [], error: "Recette introuvable.")
     }
 
     return Views.renderRecipeDetail(item: recette)
@@ -84,16 +73,10 @@ router.get("/edit/:id") { _, context -> HTML in
         let targetId = Int64(idStr),
         let recette = try Database.fetchRecipeById(db: db, recipeId: targetId)
     else {
-        return Views.renderMessagePage(
-            title: "Recette introuvable",
-            message: "Impossible de modifier cette recette."
-        )
+        return Views.renderIndex(items: [], error: "Recette introuvable.")
     }
 
-    return Views.renderEditRecipePage(
-        item: recette,
-        categories: Database.categoriesDisponibles
-    )
+    return Views.renderEditRecipePage(item: recette)
 }
 
 // CREATE

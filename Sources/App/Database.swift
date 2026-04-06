@@ -17,19 +17,6 @@ struct Database {
     static let dejaFaite = Expression<Bool>("deja_faite")
     static let tempsPreparation = Expression<Int>("temps_preparation")
 
-    static let categoriesDisponibles = [
-        "Petit-déjeuner",
-        "Déjeuner",
-        "Dîner",
-        "Dessert",
-        "Salade",
-        "Italienne",
-        "Asiatique",
-        "Rapide",
-        "Healthy",
-        "Snack",
-    ]
-
     static func setup() throws -> Connection {
         let db = try Connection("db.sqlite3")
 
@@ -111,17 +98,15 @@ struct Database {
         }
     }
 
+    // Normalisation pour recherche sans accents / casse
+    static func normalize(_ text: String) -> String {
+        text
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     static func fetchAllRecipes(db: Connection, search query: String? = nil) throws -> [Recette] {
-        var tableQuery = recettes
-
-        if let query, !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            tableQuery = tableQuery.filter(
-                titre.like("%\(query)%") || categorie.like("%\(query)%")
-                    || ingredients.like("%\(query)%")
-            )
-        }
-
-        return try db.prepare(tableQuery.order(titre.asc)).map { row in
+        let allRecipes = try db.prepare(recettes.order(titre.asc)).map { row in
             Recette(
                 id: row[id],
                 titre: row[titre],
@@ -133,6 +118,19 @@ struct Database {
                 dejaFaite: row[dejaFaite],
                 tempsPreparation: row[tempsPreparation]
             )
+        }
+
+        guard let query, !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return allRecipes
+        }
+
+        let normalizedQuery = normalize(query)
+
+        return allRecipes.filter { recette in
+            normalize(recette.titre).contains(normalizedQuery)
+                || normalize(recette.categorie).contains(normalizedQuery)
+                || normalize(recette.ingredients).contains(normalizedQuery)
+                || normalize(recette.ingredientsManquants).contains(normalizedQuery)
         }
     }
 
@@ -164,7 +162,7 @@ struct Database {
                 ingredientsManquants <- recette.ingredientsManquants,
                 etapes <- recette.etapes,
                 categorie <- recette.categorie,
-                note <- recette.dejaFaite ? recette.note : nil,
+                note <- (recette.dejaFaite ? recette.note : nil),
                 dejaFaite <- recette.dejaFaite,
                 tempsPreparation <- recette.tempsPreparation
             )
@@ -199,22 +197,21 @@ struct Database {
 
         guard let row = try db.pluck(recette) else { return }
         let current = row[dejaFaite]
+        let currentNote = row[note]
 
-        if current == true {
-            try db.run(recette.update(dejaFaite <- false, note <- nil))
-        } else {
-            try db.run(recette.update(dejaFaite <- true))
-        }
+        try db.run(
+            recette.update(
+                dejaFaite <- !current,
+                note <- (!current ? (currentNote ?? 3) : nil)
+            )
+        )
     }
 
     static func updateRating(db: Connection, id targetId: Int64, newRating: Int) throws {
         let recette = recettes.filter(id == targetId)
 
-        guard let row = try db.pluck(recette) else { return }
-        let isCooked = row[dejaFaite]
+        guard let row = try db.pluck(recette), row[dejaFaite] == true else { return }
 
-        if isCooked {
-            try db.run(recette.update(note <- newRating))
-        }
+        try db.run(recette.update(note <- newRating))
     }
 }
