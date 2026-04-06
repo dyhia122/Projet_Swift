@@ -37,6 +37,63 @@ struct Database {
         return db
     }
 
+    static func seedInitialRecipes(db: Connection) throws {
+        let count = try db.scalar(recipes.count)
+
+        if count == 0 {
+            let sampleRecipes = [
+                Recipe(
+                    id: nil,
+                    title: "Pâtes Carbonara",
+                    ingredients: "Pâtes, lardons, œufs, parmesan, poivre",
+                    missingIngredients: "Parmesan",
+                    steps: "1. Faire cuire les pâtes.\n2. Cuire les lardons.\n3. Mélanger les œufs et le parmesan.\n4. Assembler le tout.",
+                    category: "Italienne",
+                    rating: 4,
+                    isCooked: true,
+                    prepTime: 20
+                ),
+                Recipe(
+                    id: nil,
+                    title: "Pancakes maison",
+                    ingredients: "Farine, lait, œufs, sucre, beurre",
+                    missingIngredients: "",
+                    steps: "1. Mélanger tous les ingrédients.\n2. Laisser reposer 10 minutes.\n3. Cuire à la poêle.",
+                    category: "Petit-déjeuner",
+                    rating: 5,
+                    isCooked: false,
+                    prepTime: 15
+                ),
+                Recipe(
+                    id: nil,
+                    title: "Salade César",
+                    ingredients: "Salade, poulet, croûtons, parmesan, sauce César",
+                    missingIngredients: "Croûtons",
+                    steps: "1. Couper le poulet.\n2. Mélanger avec la salade.\n3. Ajouter les croûtons, parmesan et sauce.",
+                    category: "Salade",
+                    rating: 3,
+                    isCooked: true,
+                    prepTime: 12
+                ),
+                Recipe(
+                    id: nil,
+                    title: "Brownies chocolat",
+                    ingredients: "Chocolat noir, beurre, sucre, œufs, farine",
+                    missingIngredients: "Chocolat noir",
+                    steps: "1. Faire fondre le chocolat et le beurre.\n2. Ajouter sucre, œufs et farine.\n3. Cuire au four.",
+                    category: "Dessert",
+                    rating: 5,
+                    isCooked: false,
+                    prepTime: 35
+                )
+            ]
+
+            for recipe in sampleRecipes {
+                try addRecipe(db: db, recipe: recipe)
+            }
+        }
+    }
+
     static func fetchAllRecipes(db: Connection, search query: String? = nil) throws -> [Recipe] {
         var queryTable = recipes
 

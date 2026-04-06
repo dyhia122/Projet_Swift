@@ -4,6 +4,7 @@ import Hummingbird
 
 // DB setup
 let db = try Database.setup()
+try Database.seedInitialRecipes(db: db)
 
 // Router
 let router = Router()
