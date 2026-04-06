@@ -187,23 +187,20 @@ struct Database {
         guard let row = try db.pluck(recette) else { return }
         let current = row[dejaFaite]
 
-        // Si on remet "pas faite", on enlève la note
-        if current == true {
-            try db.run(
-                recette.update(
-                    dejaFaite <- false,
-                    note <- nil
-                ))
-        } else {
-            try db.run(recette.update(dejaFaite <- true))
-        }
+        try db.run(
+            recette.update(
+                dejaFaite <- !current,
+                note <- (!current ? 3 : nil)
+            ))
     }
 
     static func updateRating(db: Connection, id targetId: Int64, newRating: Int) throws {
         let recette = recettes.filter(id == targetId)
 
         guard let row = try db.pluck(recette) else { return }
-        guard row[dejaFaite] == true else { return }
+
+        // On ne note que si déjà faite
+        guard row[dejaFaite] else { return }
 
         try db.run(recette.update(note <- newRating))
     }

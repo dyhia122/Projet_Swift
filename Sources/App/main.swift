@@ -38,9 +38,6 @@ func validateRecipeForm(_ form: [String: String]) -> String? {
     if ingredients.isEmpty { return "Les ingrédients sont obligatoires." }
     if etapes.isEmpty { return "Les étapes sont obligatoires." }
     if categorie.isEmpty { return "La catégorie est obligatoire." }
-    if !Views.categories.contains(categorie) {
-        return "La catégorie choisie est invalide."
-    }
     if tempsPreparation <= 0 { return "Le temps de préparation doit être supérieur à 0." }
 
     return nil
@@ -53,7 +50,7 @@ router.get("/") { request, _ -> HTML in
     return Views.renderIndex(items: toutesLesRecettes, search: search)
 }
 
-// READ - voir détail
+// READ - page voir recette
 router.get("/recipe/:id") { _, context -> HTML in
     guard let idStr = context.parameters.get("id"),
         let targetId = Int64(idStr),
@@ -62,10 +59,10 @@ router.get("/recipe/:id") { _, context -> HTML in
         return Views.renderIndex(items: [], error: "Recette introuvable.")
     }
 
-    return Views.renderRecipeDetail(item: recette)
+    return Views.renderRecipeView(item: recette)
 }
 
-// READ - page modifier
+// READ - page modifier recette
 router.get("/recipe/:id/edit") { _, context -> HTML in
     guard let idStr = context.parameters.get("id"),
         let targetId = Int64(idStr),
@@ -86,7 +83,7 @@ router.post("/add") { request, _ -> Response in
     }
 
     let dejaFaite = form["dejaFaite"] != nil
-    let note: Int? = dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil
+    let noteValue = dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil
 
     let recette = Recette(
         id: nil,
@@ -95,7 +92,7 @@ router.post("/add") { request, _ -> Response in
         ingredientsManquants: form["ingredientsManquants"] ?? "",
         etapes: form["etapes"] ?? "",
         categorie: form["categorie"] ?? "",
-        note: note,
+        note: noteValue,
         dejaFaite: dejaFaite,
         tempsPreparation: Int(form["tempsPreparation"] ?? "0") ?? 0
     )
@@ -120,7 +117,7 @@ router.post("/update/:id") { request, context -> Response in
     }
 
     let dejaFaite = form["dejaFaite"] != nil
-    let note: Int? = dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil
+    let noteValue = dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil
 
     let recetteModifiee = Recette(
         id: targetId,
@@ -129,7 +126,7 @@ router.post("/update/:id") { request, context -> Response in
         ingredientsManquants: form["ingredientsManquants"] ?? "",
         etapes: form["etapes"] ?? "",
         categorie: form["categorie"] ?? "",
-        note: note,
+        note: noteValue,
         dejaFaite: dejaFaite,
         tempsPreparation: Int(form["tempsPreparation"] ?? "0") ?? 0
     )
