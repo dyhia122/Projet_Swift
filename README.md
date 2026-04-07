@@ -28,6 +28,19 @@ L'application permet a l'utilisateur de:
 3. Update -> Modification d'une recette deja existante
 4. Delete -> Suppression d'une recette
 
+## Modèle de données
+
+Chaque recette contient les champs suivants :
+
+- `id` : identifiant unique auto-incrémenté
+- `titre` : titre de la recette
+- `ingredients` : ingrédients nécessaires
+- `missingIngredients` : ingrédients manquants
+- `etapes` : étapes de préparation
+- `categorie` : catégorie de la recette
+- `note` : note de 1 à 5
+- `faite` : indique si la recette a déjà été réalisée
+- `tempspreparation` : temps de préparation en minutes
 
 
 ---
