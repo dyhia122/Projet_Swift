@@ -14,7 +14,7 @@ L'application permet a l'utilisateur de:
 ---
 
 ## Technologies utilisees:
--Swif
+-Swift
 -SqLite
 -HTML
 -Pico CSS
@@ -41,6 +41,7 @@ Chaque recette contient les champs suivants :
 - `note` : note de 1 à 5
 - `faite` : indique si la recette a déjà été réalisée
 - `tempspreparation` : temps de préparation en minutes
+
 
 
 ---
@@ -81,99 +82,36 @@ run.sh                  # Helper script: start the server
 ```
 
 ---
+## 5. Routes
 
-## 5. How It Works
+### GET
+- `GET /`
+  - Affiche la liste des recettes
+  - Supporte la recherche avec `?search=...`
 
-```
-Browser  →  HTTP Request
-             ↓
-         main.swift  (Hummingbird router matches the route)
-             ↓
-         Database.swift  (SQLite.swift reads/writes db.sqlite3)
-             ↓
-         Views.swift  (builds an HTML string from the data)
-             ↓
-         HTTP Response  →  Browser renders the page
-```
+- `GET /recipe/:id`
+  - Affiche la page détail d’une recette
 
-| Layer | File | Technology |
-|---|---|---|
-| Web server & routing | `main.swift` | [Hummingbird 2](https://github.com/hummingbird-project/hummingbird) |
-| Data model | `Models.swift` | Swift `struct` |
-| Database | `Database.swift` | [SQLite.swift](https://github.com/stephencelis/SQLite.swift) |
-| UI / HTML | `Views.swift` | [Pico CSS](https://picocss.com) |
 
----
+### POST
+- `POST /add`
+  - Ajoute une nouvelle recette
 
-## 6. Your Assignment
+- `POST /update/:id`
+  - Met à jour une recette existante
 
-Your job is to extend this template into your own app. Here are the four files you will work in and what to change:
+- `POST /delete/:id`
+  - Supprime une recette
 
-### `Models.swift` — Define your data
-Replace or extend `TaskItem` with a struct that represents the data your app works with.
-```swift
-struct TaskItem: Codable, Sendable {
-    let id: Int64?
-    var title: String
-    var isCompleted: Bool
-    // Add your own fields here, e.g.:
-    // var dueDate: String
-    // var priority: Int
-}
-```
+- `POST /toggle-cooked/:id`
+  - Change le statut "faite / pas encore faite"
 
-### `Database.swift` — Read and write data
-Update the SQLite table columns to match your model, and add functions for any new queries your app needs (e.g. filtering, deleting, updating fields).
+- `POST /rate/:id`
+  - Met à jour la note d’une recette
+## Lancer le projet
 
-### `Views.swift` — Change the UI
-Modify `renderIndex(items:)` to display your data the way you want. You can add new `render...()` functions for additional pages.
+Dans GitHub Codespaces :
 
-### `main.swift` — Add routes
-Register new routes to handle new pages or actions. Follow the existing pattern:
-```swift
-router.get("/my-page") { _, _ -> HTML in
-    // fetch data, return a View
-}
-
-router.post("/my-action") { request, context -> Response in
-    // handle form submission
-}
-```
-
----
-
-## 7. Key Swift Concepts in This Project
-
-| Concept | Where to see it |
-|---|---|
-| `struct` | `Models.swift`, `Database.swift`, `Views.swift` |
-| `async/await` | `main.swift` — `app.runService()`, request handlers |
-| Closures | `main.swift` — route handler blocks `{ request, context in ... }` |
-| Protocol conformance | `Views.swift` — `HTML: ResponseGenerator` |
-| `throws` / `try` | `Database.swift` — all database calls |
-| Extensions | `Database.swift` — `Connection: @unchecked Sendable` |
-
----
-
-## 8. Troubleshooting
-
-**Port 8080 is already in use**
-Another process is using the port. In the terminal run:
 ```bash
-lsof -i :8080
-kill <PID>
-```
-Then start the server again with `./run.sh`.
-
-**`error: 'App' product not found` or build errors on first open**
-The package dependencies may not have resolved yet. Run:
-```bash
-swift package resolve
 ./build.sh
-```
-
-**Codespace is slow to start**
-The first build after creating a Codespace downloads the Swift Docker image (~1 GB). Subsequent starts are much faster because the image is cached.
-
-**Changes not showing in the browser**
-The server must be restarted to pick up code changes. Press `Ctrl + C`, run `./build.sh`, then `./run.sh` again.
+./run.sh
