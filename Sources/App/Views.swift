@@ -42,74 +42,13 @@ struct Views {
         }.joined()
     }
 
-    static func escapeHTML(_ text: String) -> String {
-        text
-            .replacingOccurrences(of: "&", with: "&amp;")
-            .replacingOccurrences(of: "<", with: "&lt;")
-            .replacingOccurrences(of: ">", with: "&gt;")
-            .replacingOccurrences(of: "\"", with: "&quot;")
-            .replacingOccurrences(of: "'", with: "&#39;")
-    }
-
-    static func splitSteps(_ steps: String) -> [String] {
-        let lignes =
-            steps
-            .components(separatedBy: "\n")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-
-        return lignes.map { ligne in
-            if let range = ligne.range(of: #"^\d+\.\s"#, options: .regularExpression) {
-                return String(ligne[range.upperBound...])
-            }
-            return ligne
-        }
-    }
-
-    static func stepsInputs(existingSteps: [String] = []) -> String {
-        let steps = existingSteps.isEmpty ? [""] : existingSteps
-
-        return steps.enumerated().map { index, step in
-            """
-            <div class="step-row">
-                <label>Étape \(index + 1)</label>
-                <textarea name="etape_\(index + 1)" placeholder="Décris cette étape..." required>\(escapeHTML(step))</textarea>
-            </div>
-            """
-        }.joined()
-    }
-
-    static func stepsScript() -> String {
-        """
-        <script>
-            let stepCount = document.querySelectorAll(".step-row").length || 1;
-
-            function addStep() {
-                stepCount++;
-
-                const container = document.getElementById("steps-container");
-                const wrapper = document.createElement("div");
-                wrapper.className = "step-row";
-
-                wrapper.innerHTML = `
-                    <label>Étape ${stepCount}</label>
-                    <textarea name="etape_${stepCount}" placeholder="Décris cette étape..." required></textarea>
-                `;
-
-                container.appendChild(wrapper);
-            }
-        </script>
-        """
-    }
-
     static func baseStyles() -> String {
         """
         <style>
             :root {
                 --primary: #e67e22;
                 --primary-hover: #cf711d;
-                --primary-focus: rgba(230, 126, 34, 0.2);
-                --card-bg: rgba(255, 255, 255, 0.88);
+                --card-bg: rgba(255, 255, 255, 0.92);
                 --border-soft: rgba(0, 0, 0, 0.08);
                 --text-soft: #6b7280;
                 --success-bg: #e8fff2;
@@ -119,12 +58,6 @@ struct Views {
                 --category-bg: #f4f1ff;
                 --category-text: #6b46c1;
                 --surface-soft: rgba(249, 250, 251, 0.9);
-                --shopping-bg: #eefcf3;
-                --shopping-border: #b7e8c8;
-            }
-
-            html {
-                scroll-behavior: smooth;
             }
 
             body {
@@ -151,50 +84,12 @@ struct Views {
                 margin-bottom: 1.5rem;
             }
 
-            .topbar h1 {
-                margin: 0;
-                font-size: clamp(1.6rem, 3vw, 2.3rem);
-            }
-
-            .topbar-actions {
-                display: flex;
-                gap: 0.8rem;
-                flex-wrap: wrap;
-            }
-
-            .glass-panel {
+            .glass-panel, .page-card, .recipe-card {
                 background: var(--card-bg);
-                backdrop-filter: blur(14px);
                 border: 1px solid var(--border-soft);
                 border-radius: 24px;
                 box-shadow: 0 20px 50px rgba(0,0,0,0.08);
                 padding: 1.4rem;
-            }
-
-            .section-spacing {
-                margin-top: 1.6rem;
-            }
-
-            .error-box {
-                background: #fff1f1;
-                color: #9b1c1c;
-                border: 1px solid #f2b8b8;
-                padding: 1rem 1.1rem;
-                border-radius: 16px;
-                margin-bottom: 1.5rem;
-                font-weight: 600;
-            }
-
-            .search-panel {
-                display: flex;
-                gap: 1rem;
-                align-items: end;
-                flex-wrap: wrap;
-            }
-
-            .search-panel form {
-                flex: 1;
-                margin: 0;
             }
 
             .search-grid {
@@ -204,42 +99,51 @@ struct Views {
                 align-items: end;
             }
 
-            .search-input {
-                position: relative;
-            }
-
             .search-input input {
                 margin-bottom: 0;
                 padding-left: 1rem;
                 border-radius: 16px;
-                background: rgba(255,255,255,0.9);
+                background: rgba(255,255,255,0.95);
+                border: 1px solid rgba(230, 126, 34, 0.18);
+                box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);
             }
 
             .search-actions {
                 display: flex;
-                gap: 0.6rem;
+                gap: 0.75rem;
                 flex-wrap: wrap;
-            }
-
-            .section-title {
-                display: flex;
-                justify-content: space-between;
                 align-items: center;
-                gap: 1rem;
-                margin-bottom: 1rem;
-                flex-wrap: wrap;
             }
 
-            .section-title h2 {
-                margin: 0;
+            .search-actions button,
+            .search-actions a[role="button"] {
+                border-radius: 16px !important;
+                padding: 0.9rem 1.25rem !important;
+                font-weight: 700 !important;
+                border: none !important;
+                box-shadow: 0 10px 20px rgba(230,126,34,0.18);
+                transition: all 0.18s ease;
             }
 
-            .count-badge {
-                background: rgba(255,255,255,0.85);
-                border: 1px solid var(--border-soft);
-                border-radius: 999px;
-                padding: 0.45rem 0.85rem;
-                font-weight: 700;
+            .search-actions button {
+                background: linear-gradient(135deg, #ff9f43, #e67e22) !important;
+                color: white !important;
+            }
+
+            .search-actions button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 14px 24px rgba(230,126,34,0.25);
+            }
+
+            .search-actions a[role="button"] {
+                background: white !important;
+                color: #e67e22 !important;
+                border: 1px solid rgba(230,126,34,0.22) !important;
+            }
+
+            .search-actions a[role="button"]:hover {
+                transform: translateY(-2px);
+                background: #fff7ef !important;
             }
 
             .recipes-grid {
@@ -248,46 +152,12 @@ struct Views {
                 gap: 1.4rem;
             }
 
-            .recipe-card {
-                background: rgba(255,255,255,0.94);
-                border: 1px solid var(--border-soft);
-                border-radius: 26px;
-                padding: 1.35rem;
-                box-shadow: 0 18px 40px rgba(0,0,0,0.07);
-                transition: transform 0.18s ease, box-shadow 0.18s ease;
-            }
-
-            .recipe-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 24px 50px rgba(0,0,0,0.10);
-            }
-
             .recipe-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: flex-start;
                 gap: 1rem;
                 margin-bottom: 1rem;
-            }
-
-            .mini-label {
-                font-size: 0.72rem;
-                letter-spacing: 0.12em;
-                color: var(--text-soft);
-                margin-bottom: 0.35rem;
-                font-weight: 700;
-            }
-
-            .recipe-header h2 {
-                margin: 0;
-                font-size: 1.45rem;
-            }
-
-            .recipe-badges {
-                display: flex;
-                gap: 0.5rem;
-                flex-wrap: wrap;
-                margin-top: 0.75rem;
             }
 
             .badge {
@@ -300,38 +170,16 @@ struct Views {
                 font-weight: 700;
             }
 
-            .badge-category {
-                background: var(--category-bg);
-                color: var(--category-text);
-            }
-
-            .badge-success {
-                background: var(--success-bg);
-                color: var(--success-text);
-            }
-
-            .badge-warning {
-                background: var(--warning-bg);
-                color: var(--warning-text);
-            }
+            .badge-category { background: var(--category-bg); color: var(--category-text); }
+            .badge-success { background: var(--success-bg); color: var(--success-text); }
+            .badge-warning { background: var(--warning-bg); color: var(--warning-text); }
 
             .recipe-rating {
                 text-align: right;
                 min-width: 110px;
                 background: rgba(255, 248, 220, 0.7);
-                border: 1px solid rgba(230, 200, 100, 0.25);
                 padding: 0.8rem;
                 border-radius: 18px;
-            }
-
-            .muted-rating {
-                background: rgba(243, 244, 246, 0.8);
-                border: 1px solid rgba(0,0,0,0.06);
-            }
-
-            .stars {
-                font-size: 1.05rem;
-                margin-bottom: 0.2rem;
             }
 
             .info-grid {
@@ -341,68 +189,12 @@ struct Views {
                 margin-bottom: 1rem;
             }
 
-            .info-box {
-                background: rgba(248, 250, 252, 0.95);
-                border: 1px solid rgba(0,0,0,0.05);
-                border-radius: 18px;
-                padding: 0.85rem;
-            }
-
-            .info-box span {
-                display: block;
-                font-size: 0.8rem;
-                color: var(--text-soft);
-                margin-bottom: 0.25rem;
-            }
-
-            .recipe-section-box {
+            .info-box, .recipe-section-box {
                 background: var(--surface-soft);
                 border: 1px solid rgba(0,0,0,0.05);
                 border-radius: 18px;
                 padding: 1rem;
                 margin-top: 0.85rem;
-            }
-
-            .recipe-section-box h3 {
-                margin-top: 0;
-                margin-bottom: 0.5rem;
-                font-size: 1rem;
-            }
-
-            .missing-box {
-                border-left: 5px solid #f59e0b;
-            }
-
-            .shopping-card {
-                background: var(--shopping-bg);
-                border: 1px solid var(--shopping-border);
-                border-radius: 20px;
-                padding: 1rem 1.2rem;
-                margin-bottom: 1rem;
-            }
-
-            .shopping-card h3 {
-                margin: 0 0 0.5rem 0;
-            }
-
-            .shopping-card ul {
-                margin: 0;
-                padding-left: 1.2rem;
-            }
-
-            .shopping-card li {
-                margin-bottom: 0.3rem;
-            }
-
-            .action-grid {
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 0.8rem;
-                margin-top: 1.2rem;
-            }
-
-            .action-grid form {
-                margin: 0;
             }
 
             .inline-form {
@@ -411,116 +203,50 @@ struct Views {
                 gap: 0.7rem;
             }
 
-            .detail-link {
-                display: inline-block;
-                margin-top: 1rem;
-                font-weight: 700;
-                text-decoration: none;
-            }
-
-            .empty-box {
-                text-align: center;
-                padding: 3rem 1.5rem;
-                background: rgba(255,255,255,0.8);
-                border: 1px dashed rgba(0,0,0,0.12);
-                border-radius: 24px;
-            }
-
-            .page-card {
-                max-width: 900px;
-                margin: 0 auto;
-                background: rgba(255,255,255,0.94);
-                border: 1px solid var(--border-soft);
-                border-radius: 28px;
-                padding: 2rem;
-                box-shadow: 0 24px 55px rgba(0,0,0,0.08);
-            }
-
-            .back-link {
-                display: inline-block;
-                margin-bottom: 1rem;
-                font-weight: 700;
-                text-decoration: none;
-            }
-
-            .page-header {
-                margin-bottom: 1.5rem;
-            }
-
-            .page-header h1 {
-                margin-bottom: 0.4rem;
-            }
-
-            .page-header p {
-                color: var(--text-soft);
-            }
-
             .form-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
                 gap: 1rem;
             }
 
-            .form-full {
-                grid-column: 1 / -1;
-            }
+            .form-full { grid-column: 1 / -1; }
 
             textarea {
                 min-height: 130px;
                 resize: vertical;
             }
 
-            .step-row textarea {
-                min-height: 100px;
+            .auth-card {
+                max-width: 500px;
+                margin: 4rem auto;
             }
 
-            .steps-wrapper {
-                display: grid;
-                gap: 1rem;
-            }
-
-            .danger-zone {
-                margin-top: 1.5rem;
-                padding-top: 1.5rem;
-                border-top: 1px solid rgba(0,0,0,0.08);
-            }
-
-            .footer-note {
+            .auth-links {
+                margin-top: 1rem;
                 text-align: center;
-                margin-top: 3rem;
-                color: var(--text-soft);
-                font-size: 0.92rem;
+            }
+
+            .shopping-list {
+                list-style: none;
+                padding: 0;
+                margin-top: 1rem;
+            }
+
+            .shopping-list li {
+                background: rgba(255,255,255,0.95);
+                border: 1px solid rgba(0,0,0,0.06);
+                padding: 1rem;
+                border-radius: 16px;
+                margin-bottom: 0.75rem;
+                font-weight: 600;
             }
 
             @media (max-width: 768px) {
-                .recipe-header {
-                    flex-direction: column;
-                }
-
-                .recipe-rating {
-                    width: 100%;
-                    text-align: left;
-                }
-
+                .recipe-header,
+                .search-grid,
+                .inline-form,
                 .info-grid {
                     grid-template-columns: 1fr;
-                }
-
-                .inline-form,
-                .search-grid {
-                    grid-template-columns: 1fr;
-                }
-
-                .page-card {
-                    padding: 1.2rem;
-                }
-
-                .topbar {
-                    flex-direction: column;
-                    align-items: stretch;
-                }
-
-                .topbar-actions {
                     flex-direction: column;
                 }
             }
@@ -528,8 +254,107 @@ struct Views {
         """
     }
 
-    static func renderIndex(items: [Recette], search: String = "", error: String? = nil) -> HTML {
+    static func renderWelcomePage() -> HTML {
+        HTML(
+            content: """
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+                    <title>Bienvenue</title>
+                    \(baseStyles())
+                </head>
+                <body class="container">
+                    <main class="page-card auth-card">
+                        <h1>🍲 Mon carnet de recettes</h1>
+                        <p>Connecte-toi ou crée un compte pour gérer tes recettes.</p>
+                        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                            <a href="/login" role="button">🔐 Se connecter</a>
+                            <a href="/register" role="button" class="secondary">📝 S’inscrire</a>
+                        </div>
+                    </main>
+                </body>
+                </html>
+                """)
+    }
 
+    static func renderLoginPage() -> HTML {
+        HTML(
+            content: """
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+                    <title>Connexion</title>
+                    \(baseStyles())
+                </head>
+                <body class="container">
+                    <main class="page-card auth-card">
+                        <h1>🔐 Connexion</h1>
+                        <form action="/login" method="post">
+                            <label>Email</label>
+                            <input type="email" name="email" required>
+
+                            <label>Mot de passe</label>
+                            <input type="password" name="motDePasse" required>
+
+                            <button type="submit">Se connecter</button>
+                        </form>
+
+                        <div class="auth-links">
+                            <p>Pas encore de compte ? <a href="/register">Créer un compte</a></p>
+                        </div>
+                    </main>
+                </body>
+                </html>
+                """)
+    }
+
+    static func renderRegisterPage() -> HTML {
+        HTML(
+            content: """
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+                    <title>Inscription</title>
+                    \(baseStyles())
+                </head>
+                <body class="container">
+                    <main class="page-card auth-card">
+                        <h1>📝 Inscription</h1>
+                        <form action="/register" method="post">
+                            <label>Nom</label>
+                            <input type="text" name="nom" required>
+
+                            <label>Email</label>
+                            <input type="email" name="email" required>
+
+                            <label>Mot de passe</label>
+                            <input type="password" name="motDePasse" required>
+
+                            <button type="submit">Créer mon compte</button>
+                        </form>
+
+                        <div class="auth-links">
+                            <p>Déjà un compte ? <a href="/login">Se connecter</a></p>
+                        </div>
+                    </main>
+                </body>
+                </html>
+                """)
+    }
+
+    static func renderIndex(
+        items: [Recette], search: String = "", error: String? = nil,
+        userName: String = "Utilisateur"
+    ) -> HTML {
         let rows = items.map { item in
             let noteSection = noteHTML(item)
 
@@ -547,56 +372,38 @@ struct Views {
                     <button type="submit">Noter</button>
                 </form>
                 """
-                : """
-                <button type="button" class="secondary" disabled>Note disponible après réalisation</button>
-                """
+                : "<button type='button' class='secondary' disabled>Note disponible après réalisation</button>"
 
             return """
                 <article class="recipe-card">
                     <div class="recipe-header">
                         <div>
-                            <p class="mini-label">RECETTE</p>
-                            <h2>\(escapeHTML(item.titre))</h2>
-                            <div class="recipe-badges">
-                                <span class="badge badge-category">🍽 \(escapeHTML(item.categorie))</span>
+                            <h2>\(item.titre)</h2>
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                                <span class="badge badge-category">🍽 \(item.categorie)</span>
                                 \(badgeStatut(item.dejaFaite))
                             </div>
                         </div>
-
                         \(noteSection)
                     </div>
 
                     <div class="info-grid">
-                        <div class="info-box">
-                            <span>⏱ Temps</span>
-                            <strong>\(item.tempsPreparation) min</strong>
-                        </div>
-                        <div class="info-box">
-                            <span>🧂 Ingrédients</span>
-                            <strong>\(item.ingredients.components(separatedBy: ",").count)</strong>
-                        </div>
-                        <div class="info-box">
-                            <span>🛒 Manquants</span>
-                            <strong>\(item.ingredientsManquants.isEmpty ? 0 : item.ingredientsManquants.components(separatedBy: ",").count)</strong>
-                        </div>
+                        <div class="info-box"><strong>⏱ \(item.tempsPreparation) min</strong></div>
+                        <div class="info-box"><strong>🧂 \(item.ingredients.components(separatedBy: ",").count) ingrédients</strong></div>
+                        <div class="info-box"><strong>🛒 \(item.ingredientsManquants.isEmpty ? 0 : item.ingredientsManquants.components(separatedBy: ",").count) manquants</strong></div>
                     </div>
 
                     <div class="recipe-section-box">
                         <h3>🧂 Ingrédients</h3>
-                        <p>\(escapeHTML(item.ingredients))</p>
-                    </div>
-
-                    <div class="recipe-section-box missing-box">
-                        <h3>🛒 Ingrédients manquants</h3>
-                        <p>\(item.ingredientsManquants.isEmpty ? "Aucun ingrédient manquant 🎉" : escapeHTML(item.ingredientsManquants))</p>
+                        <p>\(item.ingredients)</p>
                     </div>
 
                     <div class="recipe-section-box">
                         <h3>👨‍🍳 Étapes</h3>
-                        <p>\(escapeHTML(item.etapes).replacingOccurrences(of: "\n", with: "<br>"))</p>
+                        <p>\(item.etapes.replacingOccurrences(of: "\n", with: "<br>"))</p>
                     </div>
 
-                    <div class="action-grid">
+                    <div style="display:grid; gap:0.8rem; margin-top:1rem;">
                         <form action="/toggle-cooked/\(item.id ?? 0)" method="post">
                             <button type="submit" class="outline">Basculer le statut</button>
                         </form>
@@ -609,8 +416,8 @@ struct Views {
                     </div>
 
                     <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1rem;">
-                        <a href="/recipe/\(item.id ?? 0)" class="detail-link">👁 Voir la recette</a>
-                        <a href="/edit/\(item.id ?? 0)" class="detail-link">✏️ Modifier</a>
+                        <a href="/recipe/\(item.id ?? 0)">👁 Voir</a>
+                        <a href="/edit/\(item.id ?? 0)">✏️ Modifier</a>
                     </div>
                 </article>
                 """
@@ -630,49 +437,43 @@ struct Views {
                 <body class="container">
                     <main>
                         <div class="topbar">
-                            <h1>🍲 Mon carnet de recettes</h1>
-                            <div class="topbar-actions">
+                            <div>
+                                <h1>🍲 Mon carnet de recettes</h1>
+                                <p>Bienvenue, <strong>\(userName)</strong> 👋</p>
+                            </div>
+                            <div style="display:flex; gap:0.8rem; flex-wrap:wrap;">
                                 <a href="/shopping-list" role="button" class="secondary">🛒 Liste de courses</a>
-                                <a href="/add" role="button">➕ Ajouter une recette</a>
+                                <a href="/add" role="button">➕ Ajouter</a>
+                                <a href="/logout" role="button" class="contrast">🚪 Déconnexion</a>
                             </div>
                         </div>
 
-                        \(error != nil ? "<div class='error-box'>⚠️ \(escapeHTML(error!))</div>" : "")
+                        \(error != nil ? "<div><strong>\(error!)</strong></div>" : "")
 
                         <section class="glass-panel">
-                            <div class="search-panel">
-                                <form action="/" method="get">
-                                    <div class="search-grid">
-                                        <div class="search-input">
-                                            <label for="search"><strong>🔍 Rechercher une recette</strong></label>
-                                            <input type="search" name="search" placeholder="Titre, catégorie, ingrédient..." value="\(escapeHTML(search))">
-                                        </div>
-                                        <div class="search-actions">
-                                            <button type="submit">Rechercher</button>
-                                            <a href="/" role="button" class="secondary">Réinitialiser</a>
-                                        </div>
+                            <form action="/" method="get">
+                                <div class="search-grid">
+                                    <div class="search-input">
+                                        <label><strong>🔍 Rechercher une recette</strong></label>
+                                        <input type="search" name="search" placeholder="Titre, catégorie, ingrédient..." value="\(search)">
                                     </div>
-                                </form>
-                            </div>
+                                    <div class="search-actions">
+                                        <button type="submit">Rechercher</button>
+                                        <a href="/" role="button">Réinitialiser</a>
+                                    </div>
+                                </div>
+                            </form>
                         </section>
 
-                        <section class="section-spacing">
-                            <div class="section-title">
-                                <h2>📚 Mes recettes</h2>
-                                <span class="count-badge">\(items.count) recette(s)</span>
-                            </div>
-
+                        <section style="margin-top:1.6rem;">
                             \(items.isEmpty
-                            ? "<div class='empty-box'><h3>Aucune recette trouvée</h3><p>Essaie un autre mot-clé ou ajoute une nouvelle recette 👨‍🍳</p></div>"
-                            : "<div class='recipes-grid'>\(rows)</div>")
+                        ? "<div class='page-card'><h3>Aucune recette trouvée</h3></div>"
+                        : "<div class='recipes-grid'>\(rows)</div>")
                         </section>
-
-                        <p class="footer-note">Fait en Swift avec Hummingbird 2 et SQLite</p>
                     </main>
                 </body>
                 </html>
-                """
-        )
+                """)
     }
 
     static func renderAddRecipePage(error: String? = nil) -> HTML {
@@ -689,21 +490,15 @@ struct Views {
                 </head>
                 <body class="container">
                     <main>
-                        <a href="/" class="back-link">← Retour à l’accueil</a>
-
+                        <a href="/">← Retour</a>
                         <section class="page-card">
-                            <div class="page-header">
-                                <h1>➕ Ajouter une recette</h1>
-                                <p>Ajoute une nouvelle recette à ton carnet.</p>
-                            </div>
-
-                            \(error != nil ? "<div class='error-box'>⚠️ \(escapeHTML(error!))</div>" : "")
+                            <h1>➕ Ajouter une recette</h1>
 
                             <form action="/add" method="post">
                                 <div class="form-grid">
                                     <div>
                                         <label>Titre</label>
-                                        <input name="titre" placeholder="Ex: Tiramisu maison" required>
+                                        <input name="titre" required>
                                     </div>
 
                                     <div>
@@ -715,7 +510,7 @@ struct Views {
 
                                     <div>
                                         <label>Temps de préparation (min)</label>
-                                        <input name="tempsPreparation" type="number" min="1" placeholder="30" required>
+                                        <input name="tempsPreparation" type="number" min="1" required>
                                     </div>
 
                                     <div>
@@ -727,64 +522,149 @@ struct Views {
                                             <option value="4">4 ⭐</option>
                                             <option value="5">5 ⭐</option>
                                         </select>
-                                        <small>La note sera prise en compte seulement si la recette est déjà faite.</small>
                                     </div>
 
                                     <div class="form-full">
                                         <label>Ingrédients</label>
-                                        <textarea name="ingredients" placeholder="Ex: mascarpone, café, biscuits, cacao..." required></textarea>
+                                        <textarea name="ingredients" required></textarea>
                                     </div>
 
                                     <div class="form-full">
                                         <label>Ingrédients manquants</label>
-                                        <textarea name="ingredientsManquants" placeholder="Ex: cacao, biscuits (laisser vide si rien ne manque)"></textarea>
-                                        <small>Sépare les ingrédients par des virgules.</small>
+                                        <textarea name="ingredientsManquants"></textarea>
                                     </div>
 
                                     <div class="form-full">
-                                        <label>Étapes de préparation</label>
-                                        <div id="steps-container" class="steps-wrapper">
-                                            \(stepsInputs())
-                                        </div>
-                                        <button type="button" class="secondary" onclick="addStep()">➕ Ajouter une étape</button>
+                                        <label>Étapes</label>
+                                        <textarea name="etapes" required></textarea>
                                     </div>
 
                                     <div class="form-full">
-                                        <label>
-                                            <input type="checkbox" name="dejaFaite">
-                                            J’ai déjà réalisé cette recette
-                                        </label>
+                                        <label><input type="checkbox" name="dejaFaite"> J’ai déjà réalisé cette recette</label>
                                     </div>
                                 </div>
 
                                 <button type="submit">Ajouter la recette</button>
                             </form>
                         </section>
-
-                        \(stepsScript())
                     </main>
                 </body>
                 </html>
-                """
-        )
+                """)
     }
 
-    static func renderShoppingListPage(items: [ShoppingIngredient]) -> HTML {
-        let content = items.map { item in
-            let recettesHTML = item.recettes.map { recette in
-                "<li>\(escapeHTML(recette))</li>"
-            }.joined()
+    static func renderRecipeDetail(item: Recette) -> HTML {
+        HTML(
+            content: """
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+                    <title>\(item.titre)</title>
+                    \(baseStyles())
+                </head>
+                <body class="container">
+                    <main>
+                        <a href="/">← Retour</a>
+                        <section class="page-card">
+                            <h1>👁 \(item.titre)</h1>
+                            <div class="recipe-section-box"><h3>Catégorie</h3><p>\(item.categorie)</p></div>
+                            <div class="recipe-section-box"><h3>Temps</h3><p>\(item.tempsPreparation) min</p></div>
+                            <div class="recipe-section-box"><h3>Ingrédients</h3><p>\(item.ingredients)</p></div>
+                            <div class="recipe-section-box"><h3>Ingrédients manquants</h3><p>\(item.ingredientsManquants.isEmpty ? "Aucun 🎉" : item.ingredientsManquants)</p></div>
+                            <div class="recipe-section-box"><h3>Étapes</h3><p>\(item.etapes.replacingOccurrences(of: "\n", with: "<br>"))</p></div>
+                            <a href="/edit/\(item.id ?? 0)" role="button">✏️ Modifier</a>
+                        </section>
+                    </main>
+                </body>
+                </html>
+                """)
+    }
 
-            return """
-                <article class="shopping-card">
-                    <h3>🛒 \(escapeHTML(item.nom))</h3>
-                    <p><strong>Utilisé dans :</strong></p>
-                    <ul>
-                        \(recettesHTML)
-                    </ul>
-                </article>
-                """
-        }.joined()
+    static func renderEditRecipePage(item: Recette) -> HTML {
+        HTML(
+            content: """
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+                    <title>Modifier \(item.titre)</title>
+                    \(baseStyles())
+                </head>
+                <body class="container">
+                    <main>
+                        <a href="/recipe/\(item.id ?? 0)">← Retour</a>
+                        <section class="page-card">
+                            <h1>✏️ Modifier la recette</h1>
+
+                            <form action="/update/\(item.id ?? 0)" method="post">
+                                <div class="form-grid">
+                                    <div>
+                                        <label>Titre</label>
+                                        <input name="titre" value="\(item.titre)" required>
+                                    </div>
+
+                                    <div>
+                                        <label>Catégorie</label>
+                                        <select name="categorie" required>
+                                            \(categoryOptions(selected: item.categorie))
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label>Temps de préparation</label>
+                                        <input name="tempsPreparation" type="number" min="1" value="\(item.tempsPreparation)" required>
+                                    </div>
+
+                                    <div>
+                                        <label>Note</label>
+                                        <select name="note">
+                                            <option value="1" \((item.note ?? 3) == 1 ? "selected" : "")>1 ⭐</option>
+                                            <option value="2" \((item.note ?? 3) == 2 ? "selected" : "")>2 ⭐</option>
+                                            <option value="3" \((item.note ?? 3) == 3 ? "selected" : "")>3 ⭐</option>
+                                            <option value="4" \((item.note ?? 3) == 4 ? "selected" : "")>4 ⭐</option>
+                                            <option value="5" \((item.note ?? 3) == 5 ? "selected" : "")>5 ⭐</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-full">
+                                        <label>Ingrédients</label>
+                                        <textarea name="ingredients" required>\(item.ingredients)</textarea>
+                                    </div>
+
+                                    <div class="form-full">
+                                        <label>Ingrédients manquants</label>
+                                        <textarea name="ingredientsManquants">\(item.ingredientsManquants)</textarea>
+                                    </div>
+
+                                    <div class="form-full">
+                                        <label>Étapes</label>
+                                        <textarea name="etapes" required>\(item.etapes)</textarea>
+                                    </div>
+
+                                    <div class="form-full">
+                                        <label><input type="checkbox" name="dejaFaite" \(item.dejaFaite ? "checked" : "")> Déjà réalisée</label>
+                                    </div>
+                                </div>
+
+                                <button type="submit">Enregistrer</button>
+                            </form>
+                        </section>
+                    </main>
+                </body>
+                </html>
+                """)
+    }
+
+    static func renderShoppingListPage(items: [String]) -> HTML {
+        let content =
+            items.isEmpty
+            ? "<p>Aucun ingrédient manquant 🎉</p>"
+            : "<ul class='shopping-list'>" + items.map { "<li>🛒 \($0)</li>" }.joined() + "</ul>"
 
         return HTML(
             content: """
@@ -799,209 +679,19 @@ struct Views {
                 </head>
                 <body class="container">
                     <main>
-                        <a href="/" class="back-link">← Retour à l’accueil</a>
-
+                        <a href="/">← Retour</a>
                         <section class="page-card">
-                            <div class="page-header">
-                                <h1>🛒 Liste de courses</h1>
-                                <p>Voici tous les ingrédients manquants de tes recettes.</p>
-                            </div>
-
-                            <div class="section-title">
-                                <h2>Ingrédients à acheter</h2>
-                                <span class="count-badge">\(items.count) ingrédient(s)</span>
-                            </div>
-
-                            \(items.isEmpty
-                        ? "<div class='empty-box'><h3>Rien à acheter 🎉</h3><p>Toutes tes recettes ont déjà leurs ingrédients.</p></div>"
-                        : content)
+                            <h1>🛒 Ma liste de courses</h1>
+                            <p>Voici tous les ingrédients manquants regroupés automatiquement.</p>
+                            \(content)
                         </section>
                     </main>
                 </body>
                 </html>
-                """
-        )
-    }
-
-    static func renderRecipeDetail(item: Recette, error: String? = nil) -> HTML {
-        let noteAffichage =
-            item.dejaFaite
-            ? "\(etoiles(item.note)) (\(item.note ?? 0)/5)"
-            : "Pas encore notée"
-
-        return HTML(
-            content: """
-                <!DOCTYPE html>
-                <html lang="fr">
-                <head>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-                    <title>\(escapeHTML(item.titre))</title>
-                    \(baseStyles())
-                </head>
-                <body class="container">
-                    <main>
-                        <a href="/" class="back-link">← Retour à l’accueil</a>
-
-                        <section class="page-card">
-                            <div class="page-header">
-                                <h1>👁 \(escapeHTML(item.titre))</h1>
-                                <p>Voici le détail complet de la recette.</p>
-                            </div>
-
-                            \(error != nil ? "<div class='error-box'>⚠️ \(escapeHTML(error!))</div>" : "")
-
-                            <div class="recipe-section-box">
-                                <h3>🍽 Catégorie</h3>
-                                <p>\(escapeHTML(item.categorie))</p>
-                            </div>
-
-                            <div class="recipe-section-box">
-                                <h3>⏱ Temps de préparation</h3>
-                                <p>\(item.tempsPreparation) minutes</p>
-                            </div>
-
-                            <div class="recipe-section-box">
-                                <h3>⭐ Note</h3>
-                                <p>\(noteAffichage)</p>
-                            </div>
-
-                            <div class="recipe-section-box">
-                                <h3>📌 Statut</h3>
-                                <p>\(item.dejaFaite ? "Déjà réalisée ✅" : "Pas encore réalisée 🕒")</p>
-                            </div>
-
-                            <div class="recipe-section-box">
-                                <h3>🧂 Ingrédients</h3>
-                                <p>\(escapeHTML(item.ingredients))</p>
-                            </div>
-
-                            <div class="recipe-section-box missing-box">
-                                <h3>🛒 Ingrédients manquants</h3>
-                                <p>\(item.ingredientsManquants.isEmpty ? "Aucun ingrédient manquant 🎉" : escapeHTML(item.ingredientsManquants))</p>
-                            </div>
-
-                            <div class="recipe-section-box">
-                                <h3>👨‍🍳 Étapes</h3>
-                                <p>\(escapeHTML(item.etapes).replacingOccurrences(of: "\n", with: "<br>"))</p>
-                            </div>
-
-                            <div style="margin-top:1.5rem;">
-                                <a href="/edit/\(item.id ?? 0)" role="button">✏️ Modifier cette recette</a>
-                            </div>
-                        </section>
-                    </main>
-                </body>
-                </html>
-                """
-        )
-    }
-
-    static func renderEditRecipePage(item: Recette, error: String? = nil) -> HTML {
-        let existingSteps = splitSteps(item.etapes)
-
-        return HTML(
-            content: """
-                <!DOCTYPE html>
-                <html lang="fr">
-                <head>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-                    <title>Modifier \(escapeHTML(item.titre))</title>
-                    \(baseStyles())
-                </head>
-                <body class="container">
-                    <main>
-                        <a href="/recipe/\(item.id ?? 0)" class="back-link">← Retour au détail</a>
-
-                        <section class="page-card">
-                            <div class="page-header">
-                                <h1>✏️ Modifier la recette</h1>
-                                <p>Tu peux modifier toutes les informations de cette recette.</p>
-                            </div>
-
-                            \(error != nil ? "<div class='error-box'>⚠️ \(escapeHTML(error!))</div>" : "")
-
-                            <form action="/update/\(item.id ?? 0)" method="post">
-                                <div class="form-grid">
-                                    <div>
-                                        <label>Titre</label>
-                                        <input name="titre" value="\(escapeHTML(item.titre))" required>
-                                    </div>
-
-                                    <div>
-                                        <label>Catégorie</label>
-                                        <select name="categorie" required>
-                                            \(categoryOptions(selected: item.categorie))
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label>Temps de préparation (min)</label>
-                                        <input name="tempsPreparation" type="number" min="1" value="\(item.tempsPreparation)" required>
-                                    </div>
-
-                                    <div>
-                                        <label>Note</label>
-                                        <select name="note">
-                                            <option value="1" \((item.note ?? 3) == 1 ? "selected" : "")>1 ⭐</option>
-                                            <option value="2" \((item.note ?? 3) == 2 ? "selected" : "")>2 ⭐</option>
-                                            <option value="3" \((item.note ?? 3) == 3 ? "selected" : "")>3 ⭐</option>
-                                            <option value="4" \((item.note ?? 3) == 4 ? "selected" : "")>4 ⭐</option>
-                                            <option value="5" \((item.note ?? 3) == 5 ? "selected" : "")>5 ⭐</option>
-                                        </select>
-                                        <small>La note ne sera gardée que si la recette est marquée comme déjà faite.</small>
-                                    </div>
-
-                                    <div class="form-full">
-                                        <label>Ingrédients</label>
-                                        <textarea name="ingredients" required>\(escapeHTML(item.ingredients))</textarea>
-                                    </div>
-
-                                    <div class="form-full">
-                                        <label>Ingrédients manquants</label>
-                                        <textarea name="ingredientsManquants">\(escapeHTML(item.ingredientsManquants))</textarea>
-                                        <small>Sépare les ingrédients par des virgules.</small>
-                                    </div>
-
-                                    <div class="form-full">
-                                        <label>Étapes de préparation</label>
-                                        <div id="steps-container" class="steps-wrapper">
-                                            \(stepsInputs(existingSteps: existingSteps))
-                                        </div>
-                                        <button type="button" class="secondary" onclick="addStep()">➕ Ajouter une étape</button>
-                                    </div>
-
-                                    <div class="form-full">
-                                        <label>
-                                            <input type="checkbox" name="dejaFaite" \(item.dejaFaite ? "checked" : "")>
-                                            Déjà réalisée
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <button type="submit">Enregistrer les modifications</button>
-                            </form>
-
-                            <div class="danger-zone">
-                                <form action="/delete/\(item.id ?? 0)" method="post">
-                                    <button type="submit" class="contrast">Supprimer cette recette</button>
-                                </form>
-                            </div>
-                        </section>
-
-                        \(stepsScript())
-                    </main>
-                </body>
-                </html>
-                """
-        )
+                """)
     }
 }
 
-// HTML helper
 struct HTML: ResponseGenerator {
     let content: String
 

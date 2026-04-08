@@ -12,8 +12,16 @@ enum CategorieRecette: String, CaseIterable, Codable, Sendable {
     case autre = "Autre"
 }
 
+struct Utilisateur: Codable, Sendable {
+    let id: Int64?
+    var nom: String
+    var email: String
+    var motDePasse: String
+}
+
 struct Recette: Codable, Sendable {
     let id: Int64?
+    var utilisateurId: Int64
     var titre: String
     var ingredients: String
     var ingredientsManquants: String
