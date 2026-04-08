@@ -37,17 +37,22 @@ L'application permet a l'utilisateur de:
 
 Chaque recette contient les champs suivants :
 
-- `id` : identifiant unique auto-incrémenté
-- `titre` : titre de la recette
-- `ingredients` : ingrédients nécessaires
-- `missingIngredients` : ingrédients manquants
-- `etapes` : étapes de préparation
-- `categorie` : catégorie de la recette
-- `note` : note de 1 à 5
-- `faite` : indique si la recette a déjà été réalisée
-- `tempspreparation` : temps de préparation en minutes
+id : identifiant unique auto-incrémenté
+titre : titre de la recette
+ingredients : ingrédients nécessaires
+ingredientsManquants : ingrédients manquants
+etapes : étapes de préparation
+categorie : catégorie de la recette (Entrée, Plat, Dessert, Snack, Boisson)
+note : note de 1 à 5
+dejaFaite : indique si la recette a déjà été réalisée
+tempsPreparation : temps de préparation en minutes
 
+Chaque utilisateur contient :
 
+id : identifiant unique
+nom : nom complet
+email : email de connexion
+motDePasse : mot de passe 
 
 ---
 
@@ -81,6 +86,7 @@ Sources/App/
   Models.swift          # Data model: the TaskItem struct
   Database.swift        # SQLite setup and all database queries
   Views.swift           # HTML page rendering (returns pages to the browser)
+  SessionManager.swift  # Gestion des sessions utilisateur
 Package.swift           # Swift package definition — dependencies and build targets
 build.sh                # Helper script: resolve + compile
 run.sh                  # Helper script: start the server
@@ -89,34 +95,43 @@ run.sh                  # Helper script: start the server
 ---
 ## 5. Routes
 
-### GET
-- `GET /`
-  - Affiche la liste des recettes
-  - Supporte la recherche avec `?search=...`
+## GET
+/
+Affiche la page d’accueil avec toutes les recettes
+Supporte la recherche : / + ?search=motclé
 
-- `GET /recipe/:id`
-  - Affiche la page détail d’une recette
+/recipe/:id
+Affiche la page détail d’une recette
+
+/login
+Page de connexion
+
+/register
+Page d’inscription
+
+/logout
+Déconnexion
+
+/add
+Formulaire pour ajouter une recette (uniquement connecté)
 
 
-### POST
-- `POST /add`
-  - Ajoute une nouvelle recette
+## POST
+/add
+Ajoute une nouvelle recette
 
-- `POST /update/:id`
-  - Met à jour une recette existante
+/update/:id
+Met à jour une recette existante
 
-- `POST /delete/:id`
-  - Supprime une recette
+/delete/:id
+Supprime une recette
 
-- `POST /toggle-cooked/:id`
-  - Change le statut "faite / pas encore faite"
+/toggle-cooked/:id
+Change le statut "faite / pas encore faite"
 
-- `POST /rate/:id`
-  - Met à jour la note d’une recette
-## Lancer le projet
+/rate/:id
+Met à jour la note d’une recette
 
-Dans GitHub Codespaces :
 
-```bash
 ./build.sh
 ./run.sh
