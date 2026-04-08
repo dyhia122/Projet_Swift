@@ -11,7 +11,7 @@ let router = Router()
 
 // Helper pour parser les formulaires
 func parseForm(_ request: Request) async throws -> [String: String] {
-    let buffer = try await request.body.collect(upTo: 1024 * 16)
+    let buffer = try await request.body.collect(upTo: 1024 * 64)
     let bodyString = String(buffer: buffer)
 
     var components = URLComponents()
@@ -26,17 +26,35 @@ func parseForm(_ request: Request) async throws -> [String: String] {
     return formData
 }
 
+// Récupérer toutes les étapes dynamiques envoyées depuis le formulaire
+func parseSteps(from form: [String: String]) -> String {
+    let etapesTriees =
+        form
+        .filter { $0.key.hasPrefix("etape_") }
+        .sorted { lhs, rhs in
+            let leftIndex = Int(lhs.key.replacingOccurrences(of: "etape_", with: "")) ?? 0
+            let rightIndex = Int(rhs.key.replacingOccurrences(of: "etape_", with: "")) ?? 0
+            return leftIndex < rightIndex
+        }
+        .map { $0.value.trimmingCharacters(in: .whitespacesAndNewlines) }
+        .filter { !$0.isEmpty }
+
+    return etapesTriees.enumerated().map { index, texte in
+        "\(index + 1). \(texte)"
+    }.joined(separator: "\n")
+}
+
 // Validation
 func validateRecipeForm(_ form: [String: String]) -> String? {
     let titre = form["titre"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let ingredients = form["ingredients"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    let etapes = form["etapes"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let categorie = form["categorie"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let tempsPreparation = Int(form["tempsPreparation"] ?? "") ?? 0
+    let etapes = parseSteps(from: form)
 
     if titre.isEmpty { return "Le titre est obligatoire." }
     if ingredients.isEmpty { return "Les ingrédients sont obligatoires." }
-    if etapes.isEmpty { return "Les étapes sont obligatoires." }
+    if etapes.isEmpty { return "Ajoute au moins une étape." }
     if categorie.isEmpty { return "La catégorie est obligatoire." }
     if tempsPreparation <= 0 { return "Le temps de préparation doit être supérieur à 0." }
 
@@ -88,13 +106,14 @@ router.post("/add") { request, _ -> Response in
     }
 
     let dejaFaite = form["dejaFaite"] != nil
+    let etapesAssemblees = parseSteps(from: form)
 
     let recette = Recette(
         id: nil,
         titre: form["titre"] ?? "",
         ingredients: form["ingredients"] ?? "",
         ingredientsManquants: form["ingredientsManquants"] ?? "",
-        etapes: form["etapes"] ?? "",
+        etapes: etapesAssemblees,
         categorie: form["categorie"] ?? "",
         note: dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil,
         dejaFaite: dejaFaite,
@@ -121,13 +140,14 @@ router.post("/update/:id") { request, context -> Response in
     }
 
     let dejaFaite = form["dejaFaite"] != nil
+    let etapesAssemblees = parseSteps(from: form)
 
     let recetteModifiee = Recette(
         id: targetId,
         titre: form["titre"] ?? "",
         ingredients: form["ingredients"] ?? "",
         ingredientsManquants: form["ingredientsManquants"] ?? "",
-        etapes: form["etapes"] ?? "",
+        etapes: etapesAssemblees,
         categorie: form["categorie"] ?? "",
         note: dejaFaite ? (Int(form["note"] ?? "3") ?? 3) : nil,
         dejaFaite: dejaFaite,

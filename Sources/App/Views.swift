@@ -42,6 +42,66 @@ struct Views {
         }.joined()
     }
 
+    static func escapeHTML(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&#39;")
+    }
+
+    static func splitSteps(_ steps: String) -> [String] {
+        let lignes =
+            steps
+            .components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        return lignes.map { ligne in
+            if let range = ligne.range(of: #"^\d+\.\s"#, options: .regularExpression) {
+                return String(ligne[range.upperBound...])
+            }
+            return ligne
+        }
+    }
+
+    static func stepsInputs(existingSteps: [String] = []) -> String {
+        let steps = existingSteps.isEmpty ? [""] : existingSteps
+
+        return steps.enumerated().map { index, step in
+            """
+            <div class="step-row">
+                <label>Étape \(index + 1)</label>
+                <textarea name="etape_\(index + 1)" placeholder="Décris cette étape..." required>\(escapeHTML(step))</textarea>
+            </div>
+            """
+        }.joined()
+    }
+
+    static func stepsScript() -> String {
+        """
+        <script>
+            let stepCount = document.querySelectorAll(".step-row").length || 1;
+
+            function addStep() {
+                stepCount++;
+
+                const container = document.getElementById("steps-container");
+                const wrapper = document.createElement("div");
+                wrapper.className = "step-row";
+
+                wrapper.innerHTML = `
+                    <label>Étape ${stepCount}</label>
+                    <textarea name="etape_${stepCount}" placeholder="Décris cette étape..." required></textarea>
+                `;
+
+                container.appendChild(wrapper);
+            }
+        </script>
+        """
+    }
+
     static func baseStyles() -> String {
         """
         <style>
@@ -381,6 +441,15 @@ struct Views {
                 resize: vertical;
             }
 
+            .step-row textarea {
+                min-height: 100px;
+            }
+
+            .steps-wrapper {
+                display: grid;
+                gap: 1rem;
+            }
+
             .danger-zone {
                 margin-top: 1.5rem;
                 padding-top: 1.5rem;
@@ -454,9 +523,9 @@ struct Views {
                     <div class="recipe-header">
                         <div>
                             <p class="mini-label">RECETTE</p>
-                            <h2>\(item.titre)</h2>
+                            <h2>\(escapeHTML(item.titre))</h2>
                             <div class="recipe-badges">
-                                <span class="badge badge-category">🍽 \(item.categorie)</span>
+                                <span class="badge badge-category">🍽 \(escapeHTML(item.categorie))</span>
                                 \(badgeStatut(item.dejaFaite))
                             </div>
                         </div>
@@ -481,17 +550,17 @@ struct Views {
 
                     <div class="recipe-section-box">
                         <h3>🧂 Ingrédients</h3>
-                        <p>\(item.ingredients)</p>
+                        <p>\(escapeHTML(item.ingredients))</p>
                     </div>
 
                     <div class="recipe-section-box missing-box">
                         <h3>🛒 Ingrédients manquants</h3>
-                        <p>\(item.ingredientsManquants.isEmpty ? "Aucun ingrédient manquant 🎉" : item.ingredientsManquants)</p>
+                        <p>\(item.ingredientsManquants.isEmpty ? "Aucun ingrédient manquant 🎉" : escapeHTML(item.ingredientsManquants))</p>
                     </div>
 
                     <div class="recipe-section-box">
                         <h3>👨‍🍳 Étapes</h3>
-                        <p>\(item.etapes.replacingOccurrences(of: "\n", with: "<br>"))</p>
+                        <p>\(escapeHTML(item.etapes).replacingOccurrences(of: "\n", with: "<br>"))</p>
                     </div>
 
                     <div class="action-grid">
@@ -532,7 +601,7 @@ struct Views {
                             <a href="/add" role="button">➕ Ajouter une recette</a>
                         </div>
 
-                        \(error != nil ? "<div class='error-box'>⚠️ \(error!)</div>" : "")
+                        \(error != nil ? "<div class='error-box'>⚠️ \(escapeHTML(error!))</div>" : "")
 
                         <section class="glass-panel">
                             <div class="search-panel">
@@ -540,7 +609,7 @@ struct Views {
                                     <div class="search-grid">
                                         <div class="search-input">
                                             <label for="search"><strong>🔍 Rechercher une recette</strong></label>
-                                            <input type="search" name="search" placeholder="Titre, catégorie, ingrédient..." value="\(search)">
+                                            <input type="search" name="search" placeholder="Titre, catégorie, ingrédient..." value="\(escapeHTML(search))">
                                         </div>
                                         <div class="search-actions">
                                             <button type="submit">Rechercher</button>
@@ -592,7 +661,7 @@ struct Views {
                                 <p>Ajoute une nouvelle recette à ton carnet.</p>
                             </div>
 
-                            \(error != nil ? "<div class='error-box'>⚠️ \(error!)</div>" : "")
+                            \(error != nil ? "<div class='error-box'>⚠️ \(escapeHTML(error!))</div>" : "")
 
                             <form action="/add" method="post">
                                 <div class="form-grid">
@@ -636,8 +705,11 @@ struct Views {
                                     </div>
 
                                     <div class="form-full">
-                                        <label>Étapes</label>
-                                        <textarea name="etapes" placeholder="Décris la préparation étape par étape..." required></textarea>
+                                        <label>Étapes de préparation</label>
+                                        <div id="steps-container" class="steps-wrapper">
+                                            \(stepsInputs())
+                                        </div>
+                                        <button type="button" class="secondary" onclick="addStep()">➕ Ajouter une étape</button>
                                     </div>
 
                                     <div class="form-full">
@@ -651,6 +723,8 @@ struct Views {
                                 <button type="submit">Ajouter la recette</button>
                             </form>
                         </section>
+
+                        \(stepsScript())
                     </main>
                 </body>
                 </html>
@@ -672,7 +746,7 @@ struct Views {
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1">
                     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-                    <title>\(item.titre)</title>
+                    <title>\(escapeHTML(item.titre))</title>
                     \(baseStyles())
                 </head>
                 <body class="container">
@@ -681,15 +755,15 @@ struct Views {
 
                         <section class="page-card">
                             <div class="page-header">
-                                <h1>👁 \(item.titre)</h1>
+                                <h1>👁 \(escapeHTML(item.titre))</h1>
                                 <p>Voici le détail complet de la recette.</p>
                             </div>
 
-                            \(error != nil ? "<div class='error-box'>⚠️ \(error!)</div>" : "")
+                            \(error != nil ? "<div class='error-box'>⚠️ \(escapeHTML(error!))</div>" : "")
 
                             <div class="recipe-section-box">
                                 <h3>🍽 Catégorie</h3>
-                                <p>\(item.categorie)</p>
+                                <p>\(escapeHTML(item.categorie))</p>
                             </div>
 
                             <div class="recipe-section-box">
@@ -709,17 +783,17 @@ struct Views {
 
                             <div class="recipe-section-box">
                                 <h3>🧂 Ingrédients</h3>
-                                <p>\(item.ingredients)</p>
+                                <p>\(escapeHTML(item.ingredients))</p>
                             </div>
 
                             <div class="recipe-section-box missing-box">
                                 <h3>🛒 Ingrédients manquants</h3>
-                                <p>\(item.ingredientsManquants.isEmpty ? "Aucun ingrédient manquant 🎉" : item.ingredientsManquants)</p>
+                                <p>\(item.ingredientsManquants.isEmpty ? "Aucun ingrédient manquant 🎉" : escapeHTML(item.ingredientsManquants))</p>
                             </div>
 
                             <div class="recipe-section-box">
                                 <h3>👨‍🍳 Étapes</h3>
-                                <p>\(item.etapes.replacingOccurrences(of: "\n", with: "<br>"))</p>
+                                <p>\(escapeHTML(item.etapes).replacingOccurrences(of: "\n", with: "<br>"))</p>
                             </div>
 
                             <div style="margin-top:1.5rem;">
@@ -734,7 +808,9 @@ struct Views {
     }
 
     static func renderEditRecipePage(item: Recette, error: String? = nil) -> HTML {
-        HTML(
+        let existingSteps = splitSteps(item.etapes)
+
+        return HTML(
             content: """
                 <!DOCTYPE html>
                 <html lang="fr">
@@ -742,7 +818,7 @@ struct Views {
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1">
                     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-                    <title>Modifier \(item.titre)</title>
+                    <title>Modifier \(escapeHTML(item.titre))</title>
                     \(baseStyles())
                 </head>
                 <body class="container">
@@ -755,13 +831,13 @@ struct Views {
                                 <p>Tu peux modifier toutes les informations de cette recette.</p>
                             </div>
 
-                            \(error != nil ? "<div class='error-box'>⚠️ \(error!)</div>" : "")
+                            \(error != nil ? "<div class='error-box'>⚠️ \(escapeHTML(error!))</div>" : "")
 
                             <form action="/update/\(item.id ?? 0)" method="post">
                                 <div class="form-grid">
                                     <div>
                                         <label>Titre</label>
-                                        <input name="titre" value="\(item.titre)" required>
+                                        <input name="titre" value="\(escapeHTML(item.titre))" required>
                                     </div>
 
                                     <div>
@@ -790,17 +866,20 @@ struct Views {
 
                                     <div class="form-full">
                                         <label>Ingrédients</label>
-                                        <textarea name="ingredients" required>\(item.ingredients)</textarea>
+                                        <textarea name="ingredients" required>\(escapeHTML(item.ingredients))</textarea>
                                     </div>
 
                                     <div class="form-full">
                                         <label>Ingrédients manquants</label>
-                                        <textarea name="ingredientsManquants">\(item.ingredientsManquants)</textarea>
+                                        <textarea name="ingredientsManquants">\(escapeHTML(item.ingredientsManquants))</textarea>
                                     </div>
 
                                     <div class="form-full">
-                                        <label>Étapes</label>
-                                        <textarea name="etapes" required>\(item.etapes)</textarea>
+                                        <label>Étapes de préparation</label>
+                                        <div id="steps-container" class="steps-wrapper">
+                                            \(stepsInputs(existingSteps: existingSteps))
+                                        </div>
+                                        <button type="button" class="secondary" onclick="addStep()">➕ Ajouter une étape</button>
                                     </div>
 
                                     <div class="form-full">
@@ -820,6 +899,8 @@ struct Views {
                                 </form>
                             </div>
                         </section>
+
+                        \(stepsScript())
                     </main>
                 </body>
                 </html>
