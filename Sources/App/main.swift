@@ -73,6 +73,12 @@ router.get("/add") { _, _ -> HTML in
     return Views.renderAddRecipePage()
 }
 
+// PAGE LISTE DE COURSES
+router.get("/shopping-list") { _, _ -> HTML in
+    let shoppingItems = try Database.fetchShoppingList(db: db)
+    return Views.renderShoppingListPage(items: shoppingItems)
+}
+
 // READ - détail (VOIR)
 router.get("/recipe/:id") { _, context -> HTML in
     guard let idStr = context.parameters.get("id"),

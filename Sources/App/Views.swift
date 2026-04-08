@@ -119,6 +119,8 @@ struct Views {
                 --category-bg: #f4f1ff;
                 --category-text: #6b46c1;
                 --surface-soft: rgba(249, 250, 251, 0.9);
+                --shopping-bg: #eefcf3;
+                --shopping-border: #b7e8c8;
             }
 
             html {
@@ -152,6 +154,12 @@ struct Views {
             .topbar h1 {
                 margin: 0;
                 font-size: clamp(1.6rem, 3vw, 2.3rem);
+            }
+
+            .topbar-actions {
+                display: flex;
+                gap: 0.8rem;
+                flex-wrap: wrap;
             }
 
             .glass-panel {
@@ -365,6 +373,27 @@ struct Views {
                 border-left: 5px solid #f59e0b;
             }
 
+            .shopping-card {
+                background: var(--shopping-bg);
+                border: 1px solid var(--shopping-border);
+                border-radius: 20px;
+                padding: 1rem 1.2rem;
+                margin-bottom: 1rem;
+            }
+
+            .shopping-card h3 {
+                margin: 0 0 0.5rem 0;
+            }
+
+            .shopping-card ul {
+                margin: 0;
+                padding-left: 1.2rem;
+            }
+
+            .shopping-card li {
+                margin-bottom: 0.3rem;
+            }
+
             .action-grid {
                 display: grid;
                 grid-template-columns: 1fr;
@@ -490,6 +519,10 @@ struct Views {
                     flex-direction: column;
                     align-items: stretch;
                 }
+
+                .topbar-actions {
+                    flex-direction: column;
+                }
             }
         </style>
         """
@@ -598,7 +631,10 @@ struct Views {
                     <main>
                         <div class="topbar">
                             <h1>🍲 Mon carnet de recettes</h1>
-                            <a href="/add" role="button">➕ Ajouter une recette</a>
+                            <div class="topbar-actions">
+                                <a href="/shopping-list" role="button" class="secondary">🛒 Liste de courses</a>
+                                <a href="/add" role="button">➕ Ajouter une recette</a>
+                            </div>
                         </div>
 
                         \(error != nil ? "<div class='error-box'>⚠️ \(escapeHTML(error!))</div>" : "")
@@ -702,6 +738,7 @@ struct Views {
                                     <div class="form-full">
                                         <label>Ingrédients manquants</label>
                                         <textarea name="ingredientsManquants" placeholder="Ex: cacao, biscuits (laisser vide si rien ne manque)"></textarea>
+                                        <small>Sépare les ingrédients par des virgules.</small>
                                     </div>
 
                                     <div class="form-full">
@@ -725,6 +762,60 @@ struct Views {
                         </section>
 
                         \(stepsScript())
+                    </main>
+                </body>
+                </html>
+                """
+        )
+    }
+
+    static func renderShoppingListPage(items: [ShoppingIngredient]) -> HTML {
+        let content = items.map { item in
+            let recettesHTML = item.recettes.map { recette in
+                "<li>\(escapeHTML(recette))</li>"
+            }.joined()
+
+            return """
+                <article class="shopping-card">
+                    <h3>🛒 \(escapeHTML(item.nom))</h3>
+                    <p><strong>Utilisé dans :</strong></p>
+                    <ul>
+                        \(recettesHTML)
+                    </ul>
+                </article>
+                """
+        }.joined()
+
+        return HTML(
+            content: """
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+                    <title>Liste de courses</title>
+                    \(baseStyles())
+                </head>
+                <body class="container">
+                    <main>
+                        <a href="/" class="back-link">← Retour à l’accueil</a>
+
+                        <section class="page-card">
+                            <div class="page-header">
+                                <h1>🛒 Liste de courses</h1>
+                                <p>Voici tous les ingrédients manquants de tes recettes.</p>
+                            </div>
+
+                            <div class="section-title">
+                                <h2>Ingrédients à acheter</h2>
+                                <span class="count-badge">\(items.count) ingrédient(s)</span>
+                            </div>
+
+                            \(items.isEmpty
+                        ? "<div class='empty-box'><h3>Rien à acheter 🎉</h3><p>Toutes tes recettes ont déjà leurs ingrédients.</p></div>"
+                        : content)
+                        </section>
                     </main>
                 </body>
                 </html>
@@ -872,6 +963,7 @@ struct Views {
                                     <div class="form-full">
                                         <label>Ingrédients manquants</label>
                                         <textarea name="ingredientsManquants">\(escapeHTML(item.ingredientsManquants))</textarea>
+                                        <small>Sépare les ingrédients par des virgules.</small>
                                     </div>
 
                                     <div class="form-full">

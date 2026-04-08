@@ -4,6 +4,11 @@ import Foundation
 // Fix Sendable issue
 extension Connection: @unchecked @retroactive Sendable {}
 
+struct ShoppingIngredient: Sendable {
+    let nom: String
+    let recettes: [String]
+}
+
 struct Database {
     static let recettes = Table("recettes")
 
@@ -213,5 +218,35 @@ struct Database {
         guard let row = try db.pluck(recette), row[dejaFaite] == true else { return }
 
         try db.run(recette.update(note <- newRating))
+    }
+
+    // NOUVEAU : Liste de courses globale
+    static func fetchShoppingList(db: Connection) throws -> [ShoppingIngredient] {
+        let toutesLesRecettes = try fetchAllRecipes(db: db)
+
+        var ingredientsMap: [String: Set<String>] = [:]
+
+        for recette in toutesLesRecettes {
+            let items = recette.ingredientsManquants
+                .components(separatedBy: ",")
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+
+            for ingredient in items {
+                let nomNormalise = normalize(ingredient)
+                if ingredientsMap[nomNormalise] == nil {
+                    ingredientsMap[nomNormalise] = []
+                }
+                ingredientsMap[nomNormalise]?.insert(recette.titre)
+            }
+        }
+
+        return ingredientsMap.map { key, recettesAssociees in
+            ShoppingIngredient(
+                nom: key.capitalized,
+                recettes: recettesAssociees.sorted()
+            )
+        }
+        .sorted { $0.nom < $1.nom }
     }
 }
