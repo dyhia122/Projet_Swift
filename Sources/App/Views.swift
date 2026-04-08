@@ -46,33 +46,37 @@ struct Views {
         """
         <style>
             :root {
-                --primary: #e67e22;
-                --primary-hover: #cf711d;
-                --card-bg: rgba(255, 255, 255, 0.92);
-                --border-soft: rgba(0, 0, 0, 0.08);
-                --text-soft: #6b7280;
+                --primary: #ff7b54;
+                --primary-dark: #e5623f;
+                --secondary: #ffb26b;
+                --bg: linear-gradient(135deg, #fff8f2 0%, #fff1e6 100%);
+                --card: rgba(255, 255, 255, 0.95);
+                --text: #2d2d2d;
+                --muted: #6b7280;
+                --border: rgba(0,0,0,0.08);
                 --success-bg: #e8fff2;
                 --success-text: #0f8a4b;
                 --warning-bg: #fff6e8;
                 --warning-text: #b76a00;
-                --category-bg: #f4f1ff;
-                --category-text: #6b46c1;
-                --surface-soft: rgba(249, 250, 251, 0.9);
+                --category-bg: #fff1fb;
+                --category-text: #a855f7;
+            }
+
+            * {
+                box-sizing: border-box;
             }
 
             body {
                 min-height: 100vh;
-                background:
-                    radial-gradient(circle at top left, rgba(255, 216, 176, 0.5), transparent 25%),
-                    radial-gradient(circle at top right, rgba(255, 231, 204, 0.7), transparent 30%),
-                    linear-gradient(180deg, #fffaf5 0%, #fff7f0 100%);
-                color: #1f2937;
+                background: var(--bg);
+                color: var(--text);
+                font-family: Inter, system-ui, sans-serif;
             }
 
             .container {
-                max-width: 1100px;
-                padding-top: 1.2rem;
-                padding-bottom: 4rem;
+                max-width: 1280px;
+                margin: 0 auto;
+                padding: 1.5rem 1rem 4rem;
             }
 
             .topbar {
@@ -81,30 +85,47 @@ struct Views {
                 align-items: center;
                 gap: 1rem;
                 flex-wrap: wrap;
-                margin-bottom: 1.5rem;
+                margin-bottom: 2rem;
             }
 
             .glass-panel, .page-card, .recipe-card {
-                background: var(--card-bg);
-                border: 1px solid var(--border-soft);
-                border-radius: 24px;
-                box-shadow: 0 20px 50px rgba(0,0,0,0.08);
-                padding: 1.4rem;
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 28px;
+                box-shadow: 0 20px 45px rgba(0,0,0,0.08);
+                padding: 1.5rem;
+                backdrop-filter: blur(10px);
+            }
+
+            .hero-title {
+                font-size: 2.2rem;
+                margin-bottom: 0.3rem;
+            }
+
+            .hero-subtitle {
+                color: var(--muted);
+                font-size: 1rem;
+            }
+
+            .top-actions {
+                display: flex;
+                gap: 0.8rem;
+                flex-wrap: wrap;
             }
 
             .search-grid {
                 display: grid;
                 grid-template-columns: 1fr auto;
-                gap: 0.8rem;
+                gap: 1rem;
                 align-items: end;
             }
 
             .search-input input {
                 margin-bottom: 0;
-                padding-left: 1rem;
-                border-radius: 16px;
-                background: rgba(255,255,255,0.95);
-                border: 1px solid rgba(230, 126, 34, 0.18);
+                padding: 1rem 1.2rem;
+                border-radius: 18px;
+                border: 1px solid rgba(255, 123, 84, 0.18);
+                background: white;
                 box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);
             }
 
@@ -112,44 +133,32 @@ struct Views {
                 display: flex;
                 gap: 0.75rem;
                 flex-wrap: wrap;
-                align-items: center;
             }
 
-            .search-actions button,
-            .search-actions a[role="button"] {
+            button,
+            a[role="button"] {
                 border-radius: 16px !important;
-                padding: 0.9rem 1.25rem !important;
+                padding: 0.9rem 1.2rem !important;
                 font-weight: 700 !important;
-                border: none !important;
-                box-shadow: 0 10px 20px rgba(230,126,34,0.18);
-                transition: all 0.18s ease;
+                transition: all 0.2s ease;
             }
 
-            .search-actions button {
-                background: linear-gradient(135deg, #ff9f43, #e67e22) !important;
-                color: white !important;
-            }
-
-            .search-actions button:hover {
+            button:hover,
+            a[role="button"]:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 14px 24px rgba(230,126,34,0.25);
-            }
-
-            .search-actions a[role="button"] {
-                background: white !important;
-                color: #e67e22 !important;
-                border: 1px solid rgba(230,126,34,0.22) !important;
-            }
-
-            .search-actions a[role="button"]:hover {
-                transform: translateY(-2px);
-                background: #fff7ef !important;
             }
 
             .recipes-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-                gap: 1.4rem;
+                grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+                gap: 1.5rem;
+            }
+
+            .recipe-card {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                height: 100%;
             }
 
             .recipe-header {
@@ -157,7 +166,13 @@ struct Views {
                 justify-content: space-between;
                 align-items: flex-start;
                 gap: 1rem;
-                margin-bottom: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .recipe-header h2 {
+                margin-bottom: 0.6rem;
+                font-size: 1.4rem;
+                word-break: break-word;
             }
 
             .badge {
@@ -168,6 +183,7 @@ struct Views {
                 padding: 0.45rem 0.8rem;
                 font-size: 0.8rem;
                 font-weight: 700;
+                white-space: nowrap;
             }
 
             .badge-category { background: var(--category-bg); color: var(--category-text); }
@@ -176,25 +192,53 @@ struct Views {
 
             .recipe-rating {
                 text-align: right;
-                min-width: 110px;
+                min-width: 120px;
+                max-width: 100%;
                 background: rgba(255, 248, 220, 0.7);
                 padding: 0.8rem;
                 border-radius: 18px;
+                flex-shrink: 0;
             }
 
+            .recipe-rating small {
+                display: block;
+                margin-top: 0.2rem;
+                color: var(--muted);
+                word-break: break-word;
+            }
+
+            /* ✅ CORRECTION DU DÉBORDEMENT */
             .info-grid {
                 display: grid;
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(3, minmax(0, 1fr));
                 gap: 0.8rem;
-                margin-bottom: 1rem;
+                margin-bottom: 0.5rem;
             }
 
             .info-box, .recipe-section-box {
-                background: var(--surface-soft);
+                background: rgba(249, 250, 251, 0.95);
                 border: 1px solid rgba(0,0,0,0.05);
                 border-radius: 18px;
                 padding: 1rem;
-                margin-top: 0.85rem;
+            }
+
+            .info-box {
+                text-align: center;
+                min-width: 0;
+                overflow-wrap: break-word;
+                word-break: break-word;
+                font-size: 0.95rem;
+            }
+
+            .recipe-section-box h3 {
+                margin-bottom: 0.6rem;
+            }
+
+            .recipe-section-box p {
+                margin-bottom: 0;
+                line-height: 1.6;
+                overflow-wrap: break-word;
+                word-break: break-word;
             }
 
             .inline-form {
@@ -214,6 +258,11 @@ struct Views {
             textarea {
                 min-height: 130px;
                 resize: vertical;
+                border-radius: 16px;
+            }
+
+            input, select {
+                border-radius: 14px !important;
             }
 
             .auth-card {
@@ -241,13 +290,46 @@ struct Views {
                 font-weight: 600;
             }
 
-            @media (max-width: 768px) {
-                .recipe-header,
-                .search-grid,
-                .inline-form,
+            .recipe-actions {
+                display: grid;
+                gap: 0.8rem;
+                margin-top: auto;
+            }
+
+            .recipe-links {
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+                margin-top: 0.5rem;
+            }
+
+            .muted-text {
+                color: var(--muted);
+            }
+
+            @media (max-width: 900px) {
                 .info-grid {
                     grid-template-columns: 1fr;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .search-grid,
+                .inline-form {
+                    grid-template-columns: 1fr;
+                }
+
+                .recipe-header {
                     flex-direction: column;
+                }
+
+                .recipe-rating {
+                    width: 100%;
+                    text-align: left;
+                }
+
+                .hero-title {
+                    font-size: 1.8rem;
                 }
             }
         </style>
@@ -352,27 +434,52 @@ struct Views {
     }
 
     static func renderIndex(
-        items: [Recette], search: String = "", error: String? = nil,
-        userName: String = "Utilisateur"
+        items: [Recette],
+        search: String = "",
+        currentUserId: Int64? = nil,
+        error: String? = nil,
+        userName: String? = nil
     ) -> HTML {
         let rows = items.map { item in
             let noteSection = noteHTML(item)
+            let isOwner = currentUserId == item.utilisateurId
 
-            let ratingForm =
-                item.dejaFaite
+            let ownerActions =
+                isOwner
                 ? """
-                <form action="/rate/\(item.id ?? 0)" method="post" class="inline-form">
-                    <select name="note">
-                        <option value="1">1 ⭐</option>
-                        <option value="2">2 ⭐</option>
-                        <option value="3">3 ⭐</option>
-                        <option value="4">4 ⭐</option>
-                        <option value="5">5 ⭐</option>
-                    </select>
-                    <button type="submit">Noter</button>
+                <form action="/toggle-cooked/\(item.id ?? 0)" method="post">
+                    <button type="submit" class="outline">Basculer le statut</button>
                 </form>
+
+                \(item.dejaFaite
+                    ? """
+                    <form action="/rate/\(item.id ?? 0)" method="post" class="inline-form">
+                        <select name="note">
+                            <option value="1">1 ⭐</option>
+                            <option value="2">2 ⭐</option>
+                            <option value="3">3 ⭐</option>
+                            <option value="4">4 ⭐</option>
+                            <option value="5">5 ⭐</option>
+                        </select>
+                        <button type="submit">Noter</button>
+                    </form>
+                    """
+                    : "<button type='button' class='secondary' disabled>Note après réalisation</button>")
+
+                <form action="/delete/\(item.id ?? 0)" method="post">
+                    <button type="submit" class="contrast">Supprimer</button>
+                </form>
+
+                <div class="recipe-links">
+                    <a href="/recipe/\(item.id ?? 0)">👁 Voir</a>
+                    <a href="/edit/\(item.id ?? 0)">✏️ Modifier</a>
+                </div>
                 """
-                : "<button type='button' class='secondary' disabled>Note disponible après réalisation</button>"
+                : """
+                <div class="recipe-links">
+                    <a href="/recipe/\(item.id ?? 0)">👁 Voir</a>
+                </div>
+                """
 
             return """
                 <article class="recipe-card">
@@ -382,6 +489,7 @@ struct Views {
                             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                                 <span class="badge badge-category">🍽 \(item.categorie)</span>
                                 \(badgeStatut(item.dejaFaite))
+                                \(isOwner ? "<span class='badge'>👤 Ma recette</span>" : "<span class='badge'>🌍 Visible à tous</span>")
                             </div>
                         </div>
                         \(noteSection)
@@ -403,25 +511,24 @@ struct Views {
                         <p>\(item.etapes.replacingOccurrences(of: "\n", with: "<br>"))</p>
                     </div>
 
-                    <div style="display:grid; gap:0.8rem; margin-top:1rem;">
-                        <form action="/toggle-cooked/\(item.id ?? 0)" method="post">
-                            <button type="submit" class="outline">Basculer le statut</button>
-                        </form>
-
-                        \(ratingForm)
-
-                        <form action="/delete/\(item.id ?? 0)" method="post">
-                            <button type="submit" class="contrast">Supprimer</button>
-                        </form>
-                    </div>
-
-                    <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1rem;">
-                        <a href="/recipe/\(item.id ?? 0)">👁 Voir</a>
-                        <a href="/edit/\(item.id ?? 0)">✏️ Modifier</a>
+                    <div class="recipe-actions">
+                        \(ownerActions)
                     </div>
                 </article>
                 """
         }.joined()
+
+        let accountButtons =
+            currentUserId != nil
+            ? """
+            <a href="/shopping-list" role="button" class="secondary">🛒 Liste de courses</a>
+            <a href="/add" role="button">➕ Ajouter</a>
+            <a href="/logout" role="button" class="contrast">🚪 Déconnexion</a>
+            """
+            : """
+            <a href="/login" role="button">🔐 Se connecter</a>
+            <a href="/register" role="button" class="secondary">📝 S’inscrire</a>
+            """
 
         return HTML(
             content: """
@@ -438,17 +545,17 @@ struct Views {
                     <main>
                         <div class="topbar">
                             <div>
-                                <h1>🍲 Mon carnet de recettes</h1>
-                                <p>Bienvenue, <strong>\(userName)</strong> 👋</p>
+                                <h1 class="hero-title">🍲 Mon carnet de recettes</h1>
+                                <p class="hero-subtitle">
+                                    \(currentUserId != nil ? "Bienvenue, <strong>\(userName ?? "Utilisateur")</strong> 👋" : "Découvre toutes les recettes disponibles 👨‍🍳")
+                                </p>
                             </div>
-                            <div style="display:flex; gap:0.8rem; flex-wrap:wrap;">
-                                <a href="/shopping-list" role="button" class="secondary">🛒 Liste de courses</a>
-                                <a href="/add" role="button">➕ Ajouter</a>
-                                <a href="/logout" role="button" class="contrast">🚪 Déconnexion</a>
+                            <div class="top-actions">
+                                \(accountButtons)
                             </div>
                         </div>
 
-                        \(error != nil ? "<div><strong>\(error!)</strong></div>" : "")
+                        \(error != nil ? "<div class='page-card'><strong>\(error!)</strong></div>" : "")
 
                         <section class="glass-panel">
                             <form action="/" method="get">
@@ -465,10 +572,10 @@ struct Views {
                             </form>
                         </section>
 
-                        <section style="margin-top:1.6rem;">
+                        <section style="margin-top:1.8rem;">
                             \(items.isEmpty
-                        ? "<div class='page-card'><h3>Aucune recette trouvée</h3></div>"
-                        : "<div class='recipes-grid'>\(rows)</div>")
+                                ? "<div class='page-card'><h3>Aucune recette trouvée</h3></div>"
+                                : "<div class='recipes-grid'>\(rows)</div>")
                         </section>
                     </main>
                 </body>
@@ -553,8 +660,10 @@ struct Views {
                 """)
     }
 
-    static func renderRecipeDetail(item: Recette) -> HTML {
-        HTML(
+    static func renderRecipeDetail(item: Recette, currentUserId: Int64? = nil) -> HTML {
+        let isOwner = currentUserId == item.utilisateurId
+
+        return HTML(
             content: """
                 <!DOCTYPE html>
                 <html lang="fr">
@@ -575,7 +684,7 @@ struct Views {
                             <div class="recipe-section-box"><h3>Ingrédients</h3><p>\(item.ingredients)</p></div>
                             <div class="recipe-section-box"><h3>Ingrédients manquants</h3><p>\(item.ingredientsManquants.isEmpty ? "Aucun 🎉" : item.ingredientsManquants)</p></div>
                             <div class="recipe-section-box"><h3>Étapes</h3><p>\(item.etapes.replacingOccurrences(of: "\n", with: "<br>"))</p></div>
-                            <a href="/edit/\(item.id ?? 0)" role="button">✏️ Modifier</a>
+                            \(isOwner ? "<a href='/edit/\(item.id ?? 0)' role='button'>✏️ Modifier</a>" : "")
                         </section>
                     </main>
                 </body>

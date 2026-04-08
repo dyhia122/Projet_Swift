@@ -8,7 +8,7 @@ try Database.seedInitialRecipes(db: db)
 let router = Router()
 
 func parseForm(_ request: Request) async throws -> [String: String] {
-    let buffer = try await request.body.collect(upTo: 1024 * 16)
+    let buffer = try await request.body.collect(upTo: 1024 * 64)
     let bodyString = String(buffer: buffer)
 
     var components = URLComponents()
@@ -116,7 +116,7 @@ router.get("/logout") { request, _ -> Response in
     return Response(
         status: .seeOther,
         headers: [
-            .location: "/login",
+            .location: "/",
             .setCookie: "session=deleted; Path=/; Max-Age=0",
         ]
     )
@@ -125,15 +125,18 @@ router.get("/logout") { request, _ -> Response in
 // MARK: HOME
 
 router.get("/") { request, _ -> HTML in
-    guard let userId = getCurrentUserId(from: request),
-        let user = try Database.fetchUserById(db: db, id: userId)
-    else {
-        return Views.renderWelcomePage()
-    }
-
     let search = request.uri.queryParameters.get("search") ?? ""
-    let toutesLesRecettes = try Database.fetchAllRecipes(db: db, userId: userId, search: search)
-    return Views.renderIndex(items: toutesLesRecettes, search: search, userName: user.nom)
+    let currentUserId = getCurrentUserId(from: request)
+    let currentUser = currentUserId.flatMap { try? Database.fetchUserById(db: db, id: $0) }
+
+    let toutesLesRecettes = try Database.fetchAllRecipes(db: db, search: search)
+
+    return Views.renderIndex(
+        items: toutesLesRecettes,
+        search: search,
+        currentUserId: currentUserId,
+        userName: currentUser?.nom
+    )
 }
 
 // MARK: ADD
@@ -178,18 +181,17 @@ router.post("/add") { request, _ -> Response in
 // MARK: DETAILS
 
 router.get("/recipe/:id") { request, context -> HTML in
-    guard let userId = getCurrentUserId(from: request) else {
-        return Views.renderLoginPage()
-    }
+    let currentUserId = getCurrentUserId(from: request)
 
     guard let idStr = context.parameters.get("id"),
         let targetId = Int64(idStr),
-        let recette = try Database.fetchRecipeById(db: db, recipeId: targetId, userId: userId)
+        let recette = try Database.fetchRecipeById(db: db, recipeId: targetId)
     else {
-        return Views.renderIndex(items: [], error: "Recette introuvable.", userName: "Utilisateur")
+        return Views.renderIndex(
+            items: [], currentUserId: currentUserId, error: "Recette introuvable.")
     }
 
-    return Views.renderRecipeDetail(item: recette)
+    return Views.renderRecipeDetail(item: recette, currentUserId: currentUserId)
 }
 
 // MARK: EDIT
@@ -201,9 +203,11 @@ router.get("/edit/:id") { request, context -> HTML in
 
     guard let idStr = context.parameters.get("id"),
         let targetId = Int64(idStr),
-        let recette = try Database.fetchRecipeById(db: db, recipeId: targetId, userId: userId)
+        let recette = try Database.fetchRecipeById(db: db, recipeId: targetId),
+        recette.utilisateurId == userId
     else {
-        return Views.renderIndex(items: [], error: "Recette introuvable.", userName: "Utilisateur")
+        return Views.renderIndex(
+            items: [], currentUserId: userId, error: "Recette introuvable ou accès refusé.")
     }
 
     return Views.renderEditRecipePage(item: recette)

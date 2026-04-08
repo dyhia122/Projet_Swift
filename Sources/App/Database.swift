@@ -107,7 +107,7 @@ struct Database {
         } else {
             let demo = Utilisateur(
                 id: nil,
-                nom: "Demo User",
+                nom: "Chef Démo",
                 email: "demo@demo.com",
                 motDePasse: "demo123"
             )
@@ -145,6 +145,19 @@ struct Database {
                     dejaFaite: false,
                     tempsPreparation: 15
                 ),
+                Recette(
+                    id: nil,
+                    utilisateurId: demoUserId,
+                    titre: "Salade César",
+                    ingredients: "Salade, poulet, parmesan, croûtons, sauce César",
+                    ingredientsManquants: "Croûtons",
+                    etapes:
+                        "Préparer la salade\nCuire le poulet\nAjouter les ingrédients\nMélanger avec la sauce",
+                    categorie: "Salade",
+                    note: 5,
+                    dejaFaite: true,
+                    tempsPreparation: 18
+                ),
             ]
 
             for recette in recettesExemple {
@@ -159,13 +172,13 @@ struct Database {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    // ✅ TOUTES les recettes visibles par tout le monde
     static func fetchAllRecipes(
-        db: Connection, userId targetUserId: Int64, search query: String? = nil
+        db: Connection,
+        search query: String? = nil
     ) throws -> [Recette] {
         let allRecipes = try db.prepare(
-            recettes
-                .filter(utilisateurId == targetUserId)
-                .order(titre.asc)
+            recettes.order(titre.asc)
         ).map { row in
             Recette(
                 id: row[id],
@@ -195,10 +208,8 @@ struct Database {
         }
     }
 
-    static func fetchRecipeById(db: Connection, recipeId: Int64, userId targetUserId: Int64) throws
-        -> Recette?
-    {
-        let recette = recettes.filter(id == recipeId && utilisateurId == targetUserId)
+    static func fetchRecipeById(db: Connection, recipeId: Int64) throws -> Recette? {
+        let recette = recettes.filter(id == recipeId)
 
         guard let row = try db.pluck(recette) else { return nil }
 
@@ -273,7 +284,10 @@ struct Database {
     }
 
     static func updateRating(
-        db: Connection, id targetId: Int64, userId targetUserId: Int64, newRating: Int
+        db: Connection,
+        id targetId: Int64,
+        userId targetUserId: Int64,
+        newRating: Int
     ) throws {
         let recette = recettes.filter(id == targetId && utilisateurId == targetUserId)
 
@@ -283,14 +297,29 @@ struct Database {
     }
 
     static func fetchShoppingList(db: Connection, userId targetUserId: Int64) throws -> [String] {
-        let recipes = try fetchAllRecipes(db: db, userId: targetUserId)
+        let allUserRecipes: [Recette] = try db.prepare(
+            recettes.filter(utilisateurId == targetUserId)
+        ).map { row in
+            Recette(
+                id: row[id],
+                utilisateurId: row[utilisateurId],
+                titre: row[titre],
+                ingredients: row[ingredients],
+                ingredientsManquants: row[ingredientsManquants],
+                etapes: row[etapes],
+                categorie: row[categorie],
+                note: row[note],
+                dejaFaite: row[dejaFaite],
+                tempsPreparation: row[tempsPreparation]
+            )
+        }
 
-        let ingredients =
-            recipes
+        let shoppingIngredients =
+            allUserRecipes
             .flatMap { $0.ingredientsManquants.components(separatedBy: ",") }
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .map { $0.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
 
-        return Array(Set(ingredients)).sorted()
+        return Array(Set(shoppingIngredients)).sorted()
     }
 }
