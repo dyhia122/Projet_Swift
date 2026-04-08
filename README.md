@@ -10,6 +10,7 @@ L'application permet a l'utilisateur de:
 -Supprimer une recette
 -Noter les recettes
 -Maquer la recette comme deja faite
+-Créer un compte et se connecter
 
 ---
 
@@ -27,6 +28,10 @@ L'application permet a l'utilisateur de:
 2. Read -> Affichage de toutes les recettes
 3. Update -> Modification d'une recette deja existante
 4. Delete -> Suppression d'une recette
+5. Rechercher –> Filtrer les recettes par titre, catégorie ou ingrédient
+6. Noter –> Ajouter une note de 1 à 5 étoiles
+7. Marquer comme faite –> Indiquer si la recette a été réalisée
+8. Liste de courses –> Regroupe automatiquement les ingrédients manquan
 
 ## Modèle de données
 
